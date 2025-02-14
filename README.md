@@ -19,7 +19,8 @@ though it doesn't seem fully baked yet haha... Also I notice it seems
 to just go off the rails pretty easily as compared to llama.cpp hah..
 
 Also its [unclear what is ktransformers v0.2 vs v0.3](https://kvcache-ai.github.io/ktransformers/en/DeepseekR1_V3_tutorial.html#v03-showcase)
-I found a way to get the v0.3 binary preview file but seems to crash maybe avx-512-only stuff? See 4.5 below.
+I found a way to get the v0.3 binary preview file but seems to crash because it only supports Intel Xeon w/ AMX?
+(See Secton 4.5 if you have an Intel Xeon with AMX extensions, otherwise skip that whole part).
 
 Additional references at bottom.
 
@@ -191,12 +192,6 @@ Edit `venv/lib/python3.11/site-packages/ktransformers/models/custom_cache.py` li
 # not sure what to do here, might be the `.py` and `.json` files don't line up with the GGUF quant??
 # maybe FA issue? no idea...
 # for now just delete the chat and start a new chat
-```
-
-## v0.3 vs v0.2 ???
-```
-wget https://github.com/kvcache-ai/ktransformers/releases/download/v0.1.4/ktransformers-0.3.0rc0+cu126torch26fancy-cp311-cp311-linux_x86_64.whl
-uv pip install -U ./ktransformers-0.3.0rc0+cu126torch26fancy-cp311-cp311-linux_x86_64.whl
 ```
 
 ## References
