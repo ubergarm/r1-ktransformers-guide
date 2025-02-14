@@ -17,6 +17,8 @@ and didn't check context lengths etc.
 This is a quick manic attempt at getting some info out on `ktransformers`
 though it doesn't seem fully baked yet haha...
 
+Also its [unclear what is ktransformers v0.2 vs v0.3](https://kvcache-ai.github.io/ktransformers/en/DeepseekR1_V3_tutorial.html#v03-showcase)
+
 Additional references at bottom.
 
 ## Guide
@@ -142,3 +144,4 @@ Also I notice it seems to just go off the rails pretty easily as compared to lla
 * [mysterioiusly popular r1 gguf repo with missing files](https://huggingface.co/is210379/DeepSeek-R1-UD-IQ1_S/discussions/1)
 * [reddit post of another guy trying ktransformers but video is too long to watch](https://www.reddit.com/r/LocalLLaMA/comments/1ioybsf/comment/mcs1g9n/)
 * [ktransformers deepseek-r1 tutorial guide](https://kvcache-ai.github.io/ktransformers/en/DeepseekR1_V3_tutorial.html)
+* [ktransformers deepseek-r1 faq](https://kvcache-ai.github.io/ktransformers/en/FAQ.html)
