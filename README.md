@@ -19,7 +19,7 @@ though it doesn't seem fully baked yet haha... Also I notice it seems
 to just go off the rails pretty easily as compared to llama.cpp hah..
 
 Also its [unclear what is ktransformers v0.2 vs v0.3](https://kvcache-ai.github.io/ktransformers/en/DeepseekR1_V3_tutorial.html#v03-showcase)
-I found a way to get the v0.3 binary preview file with the website good luck... lol
+I found a way to get the v0.3 binary preview file but seems to crash maybe avx-512-only stuff? See 4.5 below.
 
 Additional references at bottom.
 
@@ -68,8 +68,8 @@ $ KTRANSFORMERS_FORCE_BUILD=TRUE uv pip install . --no-build-isolation
 $ uv pip install flash_attn --no-build-isolation
 ```
 
-#### 4.5 Upgrade to v0.3 preview binary jawn
-Optional for latest stuff in FAQ.
+#### 4.5 OPTIONAL Upgrade to v0.3 preview binary only if you have Intel Xeon with AMX support ???
+Optional for latest stuff in FAQ. Seems to crash -- oh it is only for `Intel AMX Optimization` lol...
 ```
 # first backup the website dist e.g.
 mkdir backups
@@ -78,12 +78,49 @@ rsync -avh venv/lib/python3.11/site-packages/ktransformers/website ./backups/
 # download the binary
 wget https://github.com/kvcache-ai/ktransformers/releases/download/v0.1.4/ktransformers-0.3.0rc0+cu126torch26fancy-cp311-cp311-linux_x86_64.whl
 
+# strange they put the v0.3 in an old v0.1.4 release tag despite it being newer
+https://github.com/kvcache-ai/ktransformers/releases/tag/v0.1.4
+
 # install it over what you just built and installed
 uv pip install -U ./ktransformers-0.3.0rc0+cu126torch26fancy-cp311-cp311-linux_x86_64.whl
 
 # restore the website
 rsync -avh ./backups/website venv/lib/python3.11/site-packages/ktransformers/
 ```
+
+Its crashing...
+```
+# hrmm
+2025-02-14 16:24:41,253 INFO ktransformers/venv/lib/python3.11/site-packages/ktransformers/server/main.py[29]: Creating SQL tables
+2025-02-14 16:24:41,254 INFO ktransformers/venv/lib/python3.11/site-packages/ktransformers/server/api/openai/assistants/assistants.py[75]: Creating default assistant
+__AVX512F__
+Injecting model as ktransformers.operators.models . KDeepseekV2Model
+Injecting model.embed_tokens as default
+Injecting model.layers as default
+Injecting model.layers.0 as default
+Injecting model.layers.0.self_attn as ktransformers.operators.attention . KDeepseekV2Attention
+
+# tried it with --no_flash_attn true
+Illegal instruction     (core dumped) ktransformers --gguf_path "/mnt/models/unsloth/DeepSeek-R1-GGUF/DeepSeek-R1-UD-Q2_K_XL/" --model_path "/mnt/models/unsloth/DeepSeek-R1-GGUF/DeepSeek-R1-UD-Q2_K_XL/" --cpu_infer 24 --host 127.0.0.1 --port 8080 --web true --no_flash_attn true
+
+# try local chat still crashes
+using custom modeling_xxx.py.
+using default_optimize_rule for DeepseekV3ForCausalLM
+__AVX512F__
+Injecting model as ktransformers.operators.models . KDeepseekV2Model
+Injecting model.embed_tokens as default
+Injecting model.layers as default
+Injecting model.layers.0 as default
+Injecting model.layers.0.self_attn as ktransformers.operators.attention . KDeepseekV2Attention
+743438 Illegal instruction     (core dumped) python ./ktransformers/local_chat.py --gguf_path "/mnt/models/unsloth/DeepSeek-R1-GGUF/DeepSeek-R1-UD-Q2_K_XL/" --model_path "/mnt/models/unsloth/DeepSeek-R1-GGUF/DeepSeek-R1-UD-Q2_K_XL/" --cpu_infer 24 --max_new_tokens 1000 --force_think true
+```
+
+Probably because it is compiled for Intel Xeon with AMX Optimization only???
+
+> Intel AMX Optimization – Our AMX-accelerated kernel is meticulously tuned, running several times faster than existing llama.cpp implementations. We plan to open-source this kernel after cleansing and are considering upstream contributions to llama.cpp.
+
+[Reference](https://kvcache-ai.github.io/ktransformers/en/DeepseekR1_V3_tutorial.html#some-explanations)
+
 
 #### 5. Test local chat
 ```
@@ -166,5 +203,6 @@ uv pip install -U ./ktransformers-0.3.0rc0+cu126torch26fancy-cp311-cp311-linux_x
 * [unsloth r1 gguf ktransformers gh issue](https://github.com/kvcache-ai/ktransformers/issues/186#issuecomment-2659894815)
 * [mysterioiusly popular r1 gguf repo with missing files](https://huggingface.co/is210379/DeepSeek-R1-UD-IQ1_S/discussions/1)
 * [reddit post of another guy trying ktransformers but video is too long to watch](https://www.reddit.com/r/LocalLLaMA/comments/1ioybsf/comment/mcs1g9n/)
+* [reddit post as above comment about the v0.2 vs v0.3 and avx-512-only binary](https://www.reddit.com/r/LocalLLaMA/comments/1ioybsf/comment/mco7x22/)
 * [ktransformers deepseek-r1 tutorial guide](https://kvcache-ai.github.io/ktransformers/en/DeepseekR1_V3_tutorial.html)
 * [ktransformers deepseek-r1 faq](https://kvcache-ai.github.io/ktransformers/en/FAQ.html)
