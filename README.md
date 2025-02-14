@@ -15,9 +15,11 @@ tok/sec. This is highly anecdotal as the GPU VRAM is not loaded right
 and didn't check context lengths etc.
 
 This is a quick manic attempt at getting some info out on `ktransformers`
-though it doesn't seem fully baked yet haha...
+though it doesn't seem fully baked yet haha... Also I notice it seems
+to just go off the rails pretty easily as compared to llama.cpp hah..
 
 Also its [unclear what is ktransformers v0.2 vs v0.3](https://kvcache-ai.github.io/ktransformers/en/DeepseekR1_V3_tutorial.html#v03-showcase)
+I found a way to get the v0.3 binary preview file with the website good luck... lol
 
 Additional references at bottom.
 
@@ -64,6 +66,23 @@ $ cd ../..
 $ KTRANSFORMERS_FORCE_BUILD=TRUE uv pip install . --no-build-isolation
 # it seems to support flash attention with R1?? maybe?? maybe not??
 $ uv pip install flash_attn --no-build-isolation
+```
+
+#### 4.5 Upgrade to v0.3 preview binary jawn
+Optional for latest stuff in FAQ.
+```
+# first backup the website dist e.g.
+mkdir backups
+rsync -avh venv/lib/python3.11/site-packages/ktransformers/website ./backups/
+
+# download the binary
+wget https://github.com/kvcache-ai/ktransformers/releases/download/v0.1.4/ktransformers-0.3.0rc0+cu126torch26fancy-cp311-cp311-linux_x86_64.whl
+
+# install it over what you just built and installed
+uv pip install -U ./ktransformers-0.3.0rc0+cu126torch26fancy-cp311-cp311-linux_x86_64.whl
+
+# restore the website
+rsync -avh ./backups/website venv/lib/python3.11/site-packages/ktransformers/
 ```
 
 #### 5. Test local chat
@@ -137,7 +156,11 @@ Edit `venv/lib/python3.11/site-packages/ktransformers/models/custom_cache.py` li
 # for now just delete the chat and start a new chat
 ```
 
-Also I notice it seems to just go off the rails pretty easily as compared to llama.cpp hah..
+## v0.3 vs v0.2 ???
+```
+wget https://github.com/kvcache-ai/ktransformers/releases/download/v0.1.4/ktransformers-0.3.0rc0+cu126torch26fancy-cp311-cp311-linux_x86_64.whl
+uv pip install -U ./ktransformers-0.3.0rc0+cu126torch26fancy-cp311-cp311-linux_x86_64.whl
+```
 
 ## References
 * [unsloth r1 gguf ktransformers gh issue](https://github.com/kvcache-ai/ktransformers/issues/186#issuecomment-2659894815)
