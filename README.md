@@ -3,13 +3,13 @@ Run DeepSeek-R1 unsloth quants with ktransformers
 In theory it seems like ktransformers might be faster than llama.cpp right
 now for DeepSeek-R1 GGUF CPU/GPU inferencing. There are some rough edges
 and not exactly sure how it will pan out but this will get you started
-to compared results for yourself.
+to compare results for yourself.
 
 Keep in mind llama.cpp has some experimental threads allowing selective
 expert offload etc so this may all be moot sooner than later as things
 are moving so fast.
 
-Right now on Threadripper Pro with 256GB RAM and 96GB RAM `ktransformers`
+Right now on Threadripper Pro with 256GB RAM and ~24GB RAM `ktransformers`
 generates just over 11 tok/sec and `llama.cpp` generates just over 8
 tok/sec. This is highly anecdotal as the GPU VRAM is not loaded right
 and didn't check context lengths etc.
@@ -41,7 +41,9 @@ DeepSeek-R1-UD-Q2_K_XL-00001-of-00005.gguf  DeepSeek-R1-UD-Q2_K_XL-00004-of-0000
 
 #### 4. Install ktransformers
 ```
-# install deps e.g. `apt-get install uv build-essential npm` as needed
+# install deps e.g. `apt-get install build-essential npm` as needed
+# install uv https://docs.astral.sh/uv/getting-started/installation/
+# curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Clone repo and build it with python
 $ git clone https://github.com/kvcache-ai/ktransformers.git --depth=1
@@ -139,3 +141,4 @@ Also I notice it seems to just go off the rails pretty easily as compared to lla
 * [unsloth r1 gguf ktransformers gh issue](https://github.com/kvcache-ai/ktransformers/issues/186#issuecomment-2659894815)
 * [mysterioiusly popular r1 gguf repo with missing files](https://huggingface.co/is210379/DeepSeek-R1-UD-IQ1_S/discussions/1)
 * [reddit post of another guy trying ktransformers but video is too long to watch](https://www.reddit.com/r/LocalLLaMA/comments/1ioybsf/comment/mcs1g9n/)
+* [ktransformers deepseek-r1 tutorial guide](https://kvcache-ai.github.io/ktransformers/en/DeepseekR1_V3_tutorial.html)
