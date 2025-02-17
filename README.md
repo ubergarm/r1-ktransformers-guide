@@ -49,7 +49,7 @@ DeepSeek-R1-UD-Q2_K_XL-00001-of-00005.gguf  DeepSeek-R1-UD-Q2_K_XL-00004-of-0000
 ```
 
 #### 4. Install ktransformers
-Note `ktransformers` has a [hard requirement on CUDA dependencies](https://github.com/kvcache-ai/ktransformers/issues/337#issuecomment-2661711997) at least to compile.
+*Note*: `ktransformers` probably *requires* GPU as it has a [hard requirement on CUDA dependencies](https://github.com/kvcache-ai/ktransformers/issues/337#issuecomment-2661711997) at least to compile.
 ```
 # install deps e.g. `apt-get install build-essential npm` as needed
 # install uv https://docs.astral.sh/uv/getting-started/installation/
