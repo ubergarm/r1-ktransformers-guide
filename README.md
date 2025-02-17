@@ -78,10 +78,10 @@ $ export USE_NUMA=1
 $ KTRANSFORMERS_FORCE_BUILD=TRUE uv pip install . --no-build-isolation
 
 # if you want to rebuild again, first make clean like so
-rm -rf ktransformers/ktransformers_ext/build
-rm -rf ktransformers/ktransformers_ext/cuda/build
-rm -rf ktransformers/ktransformers_ext/cuda/dist
-rm -rf ktransformers/ktransformers_ext/cuda/*.egg-info
+$ rm -rf ktransformers/ktransformers_ext/build
+$ rm -rf ktransformers/ktransformers_ext/cuda/build
+$ rm -rf ktransformers/ktransformers_ext/cuda/dist
+$ rm -rf ktransformers/ktransformers_ext/cuda/*.egg-info
 ```
 
 #### 4. OPTIONAL Upgrade to v0.3 preview binary *only* for Intel Xeon CPUs with AMX Extensions
@@ -96,21 +96,21 @@ amx_bf16 avx512_fp16 amx_tile amx_int8
 *WARNING* Take necesary precautions when running an unknown binary file such as securing your network and files etc.
 ```
 # first backup the website dist e.g.
-mkdir backups
-rsync -avh venv/lib/python3.11/site-packages/ktransformers/website ./backups/
+$ mkdir backups
+$ rsync -avh venv/lib/python3.11/site-packages/ktransformers/website ./backups/
 
 # download the binary at your own risk
-wget https://github.com/kvcache-ai/ktransformers/releases/download/v0.1.4/ktransformers-0.3.0rc0+cu126torch26fancy-cp311-cp311-linux_x86_64.whl
+$ wget https://github.com/kvcache-ai/ktransformers/releases/download/v0.1.4/ktransformers-0.3.0rc0+cu126torch26fancy-cp311-cp311-linux_x86_64.whl
 
 # strange they put the v0.3 in an old v0.1.4 release tag despite it being newer
-https://github.com/kvcache-ai/ktransformers/releases/tag/v0.1.4
+# https://github.com/kvcache-ai/ktransformers/releases/tag/v0.1.4
 
 # install it over what you just built and installed
-uv pip install -U ./ktransformers-0.3.0rc0+cu126torch26fancy-cp311-cp311-linux_x86_64.whl
+$ uv pip install -U ./ktransformers-0.3.0rc0+cu126torch26fancy-cp311-cp311-linux_x86_64.whl
 
 # REMEMBER API and WEBSITE DOES NOT YET WORK
 # restore the website
-rsync -avh ./backups/website venv/lib/python3.11/site-packages/ktransformers/
+$ rsync -avh ./backups/website venv/lib/python3.11/site-packages/ktransformers/
 ```
 
 It crashes on CPUs without AMX extensions.
@@ -200,6 +200,8 @@ $ python ./ktransformers/local_chat.py \
 
 Chat: Count from one to ten in Mandarin Chinese.
 
+...
+
 prompt eval count:    14 token(s)
 prompt eval duration: 0.8247685432434082s
 prompt eval rate:     16.974459216090978 tokens/s # <--- as high as 60 tokens/s at times
@@ -220,6 +222,8 @@ $ ./build/bin/llama-server \
     --threads 24 \
     --host 127.0.0.1 \
     --port 8080
+
+...
 
 prompt eval time =    8014.15 ms /   226 tokens (   35.46 ms per token,    28.20 tokens per second)
        eval time =   75773.60 ms /   615 tokens (  123.21 ms per token,     8.12 tokens per second)
