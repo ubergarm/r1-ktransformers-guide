@@ -11,22 +11,20 @@ branches](https://github.com/ggml-org/llama.cpp/pull/11397#issuecomment-26459738
 allowing selective expert offload etc so this may all be moot sooner
 than later as things are moving so fast.
 
-Right now on Threadripper Pro with 256GB RAM and ~24GB RAM `ktransformers`
-generates just over 11 tok/sec with and `llama.cpp` generates just over 8
-tok/sec. This is highly anecdotal as the GPU VRAM is not loaded right
-and didn't check context lengths etc.
+## NOTES for `ktransformers@c515cc4`
 
-There are still bugs in ktransformers at least running this unsloth dynamic quant
-mentioned below.
+1. There is a *hard runtime requirement* on at least one *CUDA* GPU with about 16GB VRAM or more. If you want CPU *ONLY* inference, continue using `llama.cpp` currently.
+2. The Web and API interface do not work yet. They will hallucinate.
+3. Only the local chat is working.
+4. You must use a single line prompt with local chat as any copy paste '\n' will trigger multiple generations leading to confusing output.
 
-## Bugs
-1. The Web and API interface do not work yet. They will hallucinate.
-2. Only the local chat is working.
-3. You must use a single line prompt with local chat as any copy paste '\n' will trigger multiple generations leading to confusing output.
-
-If you have an Intel Xeon with AMX extensions look closely at secton 4.5 below.
+If you have an Intel Xeon with AMX extensions look closely at secton 4 below regarding the `v0.3 binary`.
 
 Additional references at bottom.
+
+## TODO
+- [ ] Figure out arguments for context, kv-cache quantization, how to use more available VRAM, etc...
+- [ ] Keep testing until the Website and mainly the API begin working (for OpenWebUI or litellm).
 
 ## Guide
 #### 1. Download unsloth GGUF files
@@ -48,7 +46,7 @@ configuration_deepseek.py                   DeepSeek-R1-UD-Q2_K_XL-00003-of-0000
 DeepSeek-R1-UD-Q2_K_XL-00001-of-00005.gguf  DeepSeek-R1-UD-Q2_K_XL-00004-of-00005.gguf  tokenizer_config.json
 ```
 
-#### 4. Install ktransformers
+#### 3. Install ktransformers
 *Note*: `ktransformers` probably *requires* GPU as it has a [hard requirement on CUDA dependencies](https://github.com/kvcache-ai/ktransformers/issues/337#issuecomment-2661711997) at least to compile.
 ```
 # install deps e.g. `apt-get install build-essential npm` as needed
@@ -71,14 +69,22 @@ $ npm install @vue/cli
 $ npm run build
 $ cd ../..
 
+# there is a *HARD RUNTIME REQUIREMENT* on at least a single *CUDA* GPU w/ 16GB VRAM or more
+$ uv pip install flash_attn --no-build-isolation
+
 # finally do the real build
 $ KTRANSFORMERS_FORCE_BUILD=TRUE uv pip install . --no-build-isolation
-# it seems to support flash attention with R1?? maybe?? maybe not??
 $ uv pip install flash_attn --no-build-isolation
 ```
 
-#### 4.5 OPTIONAL Upgrade to v0.3 preview binary *only* for Intel Xeon CPUs with AMX Extensions
+#### 4. OPTIONAL Upgrade to v0.3 preview binary *only* for Intel Xeon CPUs with AMX Extensions
 [These binaries will crash on other CPUs even with AVX512 CPU flags e.g. AMD 9950X, Threadripper Pro, etc.](https://kvcache-ai.github.io/ktransformers/en/DeepseekR1_V3_tutorial.html#v03-showcase)
+
+Check to see if your Intel Xeon processor and Linux kernel are new enough to support AMX extensions:
+```
+$ lscpu | grep amx
+amx_bf16 avx512_fp16 amx_tile amx_int8
+```
 
 *WARNING* Take necesary precautions when running an unknown binary file such as securing your network and files etc.
 ```
@@ -146,12 +152,7 @@ $ python ./ktransformers/local_chat.py \
     --max_new_tokens 1024 \
     --force_think true
 
-prompt eval count:    14 token(s)
-prompt eval duration: 0.42368268966674805s
-prompt eval rate:     33.04359687437748 tokens/s
-eval count:           946 token(s)
-eval duration:        81.89759874343872s
-eval rate:            11.55101021903636 tokens/s
+Chat: Count from one to ten in Mandarin Chinese.
 ```
 
 ### 6. Test web app
@@ -170,6 +171,52 @@ $ ktransformers
     --web true
 
 # Open Browser to: http://localhost:8080/web/index.html#/chat
+```
+
+## Benchmarks
+Check out [level1techs](https://forum.level1techs.com/t/deepseek-deep-dive-r1-at-home/225826) for more llama.cpp benchmarks including CPU only performance.
+
+#### Hardware
+* AMD Ryzen Threadripper PRO 7965WX 24-Cores
+* Dual NVIDIA RTX A6000 with 48 GB VRAM each (96GB total)
+* Linux Kernel 6.13.0
+* Ubuntu 24.04.1 LTS (Noble Numbat)
+
+#### ktransformers@c515cc4
+```
+$ python ./ktransformers/local_chat.py \
+    --gguf_path "/mnt/models/unsloth/DeepSeek-R1-GGUF/DeepSeek-R1-UD-Q2_K_XL/" \
+    --model_path "/mnt/models/unsloth/DeepSeek-R1-GGUF/DeepSeek-R1-UD-Q2_K_XL/" \
+    --cpu_infer 24 \
+    --max_new_tokens 1024 \
+    --force_think true
+
+Chat: Count from one to ten in Mandarin Chinese.
+
+prompt eval count:    14 token(s)
+prompt eval duration: 0.8247685432434082s
+prompt eval rate:     16.974459216090978 tokens/s # <--- as high as 60 tokens/s at times
+eval count:           750 token(s)
+eval duration:        56.33242607116699s
+eval rate:            13.31382388985866 tokens/s
+```
+
+#### llama.cpp@90e4dba4
+```
+$ ./build/bin/llama-server \
+    --model "/mnt/models/unsloth/DeepSeek-R1-GGUF/DeepSeek-R1-UD-Q2_K_XL/DeepSeek-R1-UD-Q2_K_XL-00001-of-00005.gguf" \
+    --ctx-size 8192 \
+    --n-gpu-layers 21 \
+    --cache-type-k q4_0 \
+    --cache-type-v f16 \
+    --parallel 1 \
+    --threads 24 \
+    --host 127.0.0.1 \
+    --port 8080
+
+prompt eval time =    8014.15 ms /   226 tokens (   35.46 ms per token,    28.20 tokens per second)
+       eval time =   75773.60 ms /   615 tokens (  123.21 ms per token,     8.12 tokens per second)
+      total time =   83787.75 ms /   841 tokens
 ```
 
 ## References
