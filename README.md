@@ -13,7 +13,7 @@ than later as things are moving so fast.
 
 ## NOTES for `ktransformers@c515cc4`
 
-1. There is a *hard runtime requirement* on at least one *CUDA* GPU with about 16GB VRAM or more. If you want CPU *ONLY* inference, continue using `llama.cpp` currently.
+1. There is a *hard runtime requirement* on at least one *CUDA* GPU with about 14GB VRAM for 4k context and [24GB for 8k context in v0.2.1](https://github.com/kvcache-ai/ktransformers?tab=readme-ov-file#-updates). If you want CPU *ONLY* inference, continue using `llama.cpp` currently.
 2. The Web and API interface do not work yet. They will hallucinate.
 3. Only the local chat is working.
 4. You must use a single line prompt with local chat as any copy paste '\n' will trigger multiple generations leading to confusing output.
