@@ -23,8 +23,7 @@ If you have an Intel Xeon with AMX extensions look closely at secton 4 below reg
 Additional references at bottom.
 
 ## TODO
-- [ ] Figure out arguments for context, kv-cache quantization, how to use more available VRAM, etc...
-- [ ] Keep testing until the Website and mainly the API begin working (for OpenWebUI or litellm).
+- [ ] Testing new releases until the the API endpoint begins working (for open-webui or litellm etc).
 
 ## Guide
 #### 1. Download unsloth GGUF files
@@ -72,14 +71,13 @@ $ cd ../..
 # there is a *HARD RUNTIME REQUIREMENT* on at least a single *CUDA* GPU w/ 16GB VRAM or more
 $ uv pip install flash_attn --no-build-isolation
 
-# ONLY IF  you have dual CPU sockets and >1TB RAM
+# ONLY IF you have dual CPU sockets and >1TB RAM
 $ export USE_NUMA=1
 
 # finally do the real build
 $ KTRANSFORMERS_FORCE_BUILD=TRUE uv pip install . --no-build-isolation
-$ uv pip install flash_attn --no-build-isolation
 
-# make clean
+# if you want to rebuild again, first make clean like so
 rm -rf ktransformers/ktransformers_ext/build
 rm -rf ktransformers/ktransformers_ext/cuda/build
 rm -rf ktransformers/ktransformers_ext/cuda/dist
@@ -227,6 +225,10 @@ prompt eval time =    8014.15 ms /   226 tokens (   35.46 ms per token,    28.20
        eval time =   75773.60 ms /   615 tokens (  123.21 ms per token,     8.12 tokens per second)
       total time =   83787.75 ms /   841 tokens
 ```
+
+## Advanced
+1. Seems like API configs live in `ktransformers/configs/config.yaml` which maybe you can edit?
+2. For some reason it tries to keep the database on the server side instead of client side? `rm ./venv/lib/python3.11/site-packages/ktransformers/server.db`
 
 ## References
 * [ktransformers github update documentation PR](https://github.com/kvcache-ai/ktransformers/pull/384)
