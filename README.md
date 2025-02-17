@@ -15,7 +15,7 @@ than later as things are moving so fast.
 
 1. There is a *hard runtime requirement* on at least one *CUDA* GPU with about 14GB VRAM for 4k context and [24GB for 8k context in v0.2.1](https://github.com/kvcache-ai/ktransformers?tab=readme-ov-file#-updates). If you want CPU *ONLY* inference, continue using `llama.cpp` currently.
 2. The Web and API interface do not work yet. They will hallucinate.
-3. Only the local chat is working.
+3. Only the local chat is working. It has no memory, just one round of user prompt and assistant response.
 4. You must use a single line prompt with local chat as any copy paste '\n' will trigger multiple generations leading to confusing output.
 
 If you have an Intel Xeon with AMX extensions look closely at secton 4 below regarding the `v0.3 binary`.
@@ -72,9 +72,18 @@ $ cd ../..
 # there is a *HARD RUNTIME REQUIREMENT* on at least a single *CUDA* GPU w/ 16GB VRAM or more
 $ uv pip install flash_attn --no-build-isolation
 
+# ONLY IF  you have dual CPU sockets and >1TB RAM
+$ export USE_NUMA=1
+
 # finally do the real build
 $ KTRANSFORMERS_FORCE_BUILD=TRUE uv pip install . --no-build-isolation
 $ uv pip install flash_attn --no-build-isolation
+
+# make clean
+rm -rf ktransformers/ktransformers_ext/build
+rm -rf ktransformers/ktransformers_ext/cuda/build
+rm -rf ktransformers/ktransformers_ext/cuda/dist
+rm -rf ktransformers/ktransformers_ext/cuda/*.egg-info
 ```
 
 #### 4. OPTIONAL Upgrade to v0.3 preview binary *only* for Intel Xeon CPUs with AMX Extensions
@@ -226,5 +235,6 @@ prompt eval time =    8014.15 ms /   226 tokens (   35.46 ms per token,    28.20
 * [mysterioiusly popular r1 gguf repo with missing files](https://huggingface.co/is210379/DeepSeek-R1-UD-IQ1_S/discussions/1)
 * [reddit post of another guy trying ktransformers but video is too long to watch](https://www.reddit.com/r/LocalLLaMA/comments/1ioybsf/comment/mcs1g9n/)
 * [reddit post as above comment about the v0.2 vs v0.3 and avx-512-only binary](https://www.reddit.com/r/LocalLLaMA/comments/1ioybsf/comment/mco7x22/)
+* [ktransformers deepseek-r1 official install guide](https://kvcache-ai.github.io/ktransformers/en/install.html#installation)
 * [ktransformers deepseek-r1 tutorial guide](https://kvcache-ai.github.io/ktransformers/en/DeepseekR1_V3_tutorial.html)
 * [ktransformers deepseek-r1 faq](https://kvcache-ai.github.io/ktransformers/en/FAQ.html)
