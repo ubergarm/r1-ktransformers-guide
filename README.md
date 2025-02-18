@@ -1,7 +1,8 @@
-Run DeepSeek-R1 671B unsloth quants with ktransformers
+DeepSeek-R1 671B unsloth quants on ktransformers
 ===
-In early testing ktransformers is running faster than llama.cpp right
-now for DeepSeek-R1 GGUF inferencing for some system configurations.
+In early testing ktransformers is running about 2x faster than llama.cpp
+right now for DeepSeek-R1 GGUF inferencing for some supported system
+configurations and quants.
 
 While ktransformers is still rough around the edges and not production ready imo,
 it does seem to have implemented some optimizations ahead of llama.cpp for R1 including:
@@ -26,9 +27,9 @@ Keep in mind llama.cpp has some as experimental branches going as well including
 
 If you have an Intel Xeon with AMX extensions look closely at secton 4 below regarding the `v0.3 binary`.
 
-## INCOMING FIX
+## INCOMING FIX for API endpoint
 I tested an incoming [ktransformers PR #382](https://github.com/kvcache-ai/ktransformers/pull/382#issuecomment-2664109713)
-which seems fix the OpenAI compatible API endpoint! With luck it will land in `main soon.`
+which seems fix the OpenAI compatible API endpoint! With luck it will land in `main` soon.
 
 Initial new benchmark for this experimental PR looks really good at face value:
 
@@ -91,7 +92,8 @@ cd ../..
 # might be able to prepend `MAX_JOBS=8 uv pip ...` or some way to speed it up a bit?
 uv pip install flash_attn --no-build-isolation
 
-# ONLY IF you have dual CPU sockets and >1TB RAM to hold 2x copies of entire model in RAM (one copy per socket)
+# ONLY IF you have Intel dual socket and >1TB RAM to hold 2x copies of entire model in RAM (one copy per socket)
+# Dual socket AMD EPYC NPS0 probably makes this not needed?
 # $ export USE_NUMA=1
 
 # finally do the real build
@@ -99,7 +101,7 @@ KTRANSFORMERS_FORCE_BUILD=TRUE uv pip install . --no-build-isolation
 
 # DONE, Continue below!
 
-# WIP: If there is an error and you have very new nvcc 12.8i maybe? example error log below.
+# WIP: If there is an error and you have very new nvcc 12.8 maybe? example error log below.
 # this didn't work for me, but might for you. i built it on a different box then copied it all over.
 # $ uv pip uninstall torch
 # $ uv pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cu128
@@ -258,7 +260,7 @@ prompt eval time =    8014.15 ms /   226 tokens (   35.46 ms per token,    28.20
 ```
 
 ## Advanced
-1. Seems like maybe some configs live in `ktransformers/configs/config.yaml` used with `--mode="long_context"`?
+1. Seems like maybe some configs live in `ktransformers/configs/config.yaml` used with `--mode="long_context"`? (This is probably a red herring, see newer stuff below lol)
 ```bash
 $ find . -name config.yaml
 ./venv/lib/python3.11/site-packages/ktransformers/configs/config.yaml # <--- after running with `--mode="long_context"`
@@ -293,8 +295,93 @@ $ ktransformers \
     # --optimize_config_path ./venv/lib/python3.11/site-packages/ktransformers/optimize/optimize_rules/DeepSeek-V3-Chat.yaml # single GPU
     # maybe you can make a -cpu-only.yaml and figure out the injection syntax to no longer require GPU?
 ```
+5. More Advanced Commands
+I found the best documentation for how to run ktransformers in [ktransformers PR#382 ceerRep comment](https://github.com/kvcache-ai/ktransformers/pull/382#issue-2856190692)
 
-5. Disk Read IOPs Discussion
+Possibly the `--mode="long_context"` `config.yaml` is a red herring and it is easier to simply pass those values via CLI arguments.
+```bash
+# chat
+# seems to imply --prompt_file is actually user prompt and there is no way to provide system prompt which is fine as R1 should have none
+PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True python3 ktransformers/local_chat.py \
+    --model_path ~/DeepSeek-R1/ \
+    --model_name deepseek \ # <--- this will make open-webui look prettier probably lmao...
+    --gguf_path ~/DeepSeek-R1-GGUF/DeepSeek-R1-UD-Q2_K_XL/ \
+    --cpu_infer 64 \
+    --max_new_tokens 8192 \
+    --cache_lens 32768 \
+    --total_context 32768 \
+    --temperature 0.6 \
+    --top_p 0.95 \
+    --optimize_rule_path ktransformers/optimize/optimize_rules/DeepSeek-V3-Chat-multi-4gpu.yaml \ # <--- or specify the single GPU or maybe make your own for CPU only ???
+    --force_think \ # <--- only for R1
+    --use_cuda_graph \ # <--- not 100% this is actually good yet or not for all configs
+    --prompt_file ~/test.txt # <--- can probably omit for interactive one shot no carriage return chat: interface
+
+# all argument comments are above
+# API server
+PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True python3 ktransformers/server/main.py \
+    --model_path /home/naivlex/DeepSeek-R1/ \
+    --model_name deepseek \
+    --gguf_path /home/naivlex/DeepSeek-R1-GGUF/DeepSeek-R1-UD-Q2_K_XL/ \
+    --cpu_infer 64 \
+    --max_new_tokens 8192 \
+    --cache_lens 32768 \
+    --total_context 32768 \
+    --temperature 0.6 \
+    --top_p 0.95 \
+    --optimize_config_path ktransformers/optimize/optimize_rules/DeepSeek-V3-Chat-multi-gpu.yaml \
+    --force_think \
+    --use_cuda_graph \
+    --host 127.0.0.1 \
+    --port 8080
+```
+
+6. Optional open-webui interface
+
+I want a more simplified version of this for CLI which I think exists. I
+don't want full `tui` like `textual` but I want actual scrollback
+buffer and using [primp](https://github.com/deedy5/primp) to expand
+`#https://some.site.com` into prompt.
+
+First install [open-webui](https://github.com/open-webui/open-webui)
+```
+mkdir open-webui
+cd open-webui
+uv venv ./venv --python 3.11
+source venv/bin/activate
+uv pip install open-webui
+```
+
+Then copy paste this into a `./go.sh` script and `chmod u+x go.sh` or whatever you like.
+```bash
+#!/usr/bin/env bash
+
+source venv/bin/activate
+
+# open-webui does NOT honor HOST and PORT ENV VAR so pass it manually as arguments
+# https://docs.openwebui.com/getting-started/env-configuration/#port
+# when open-webui gets borked just do `rm -rf ./data` and restart everything after clearing browser cache
+
+export DATA_DIR="$(pwd)/data"
+export ENABLE_OLLAMA_API=False
+export ENABLE_OPENAI_API=True
+export OPENAI_API_KEY="dont_change_this_cuz_openai_is_the_mcdonalds_of_ai"
+export OPENAI_API_BASE_URL="http://127.0.0.1:8080/v1" # <--- this must match API config above for ktransformers or llama.cpp
+#export DEFAULT_MODELS="openai/foo/bar" # <--- leave this commented, i use this slug for `litellm` access
+export WEBUI_AUTH=False
+export DEFAULT_USER_ROLE="admin"
+export HOST=127.0.0.1
+export PORT=3000 # <--- this is for the open-webui server webpage
+
+open-webui serve \
+  --host $HOST \
+  --port $PORT
+
+# open browser to the url/port shown
+# i don't know why it downloads onnx models, annoys me lmao...
+```
+
+7. Disk Read IOPs Discussion
 
 On my local 3090TI 24GB VRAM + 96GB DDR5@88GB/s + 9950X + PCIe Gen 5
 T700 2TB NVMe hits around 3.2 tok/sec generation with this same model
@@ -329,9 +416,11 @@ gguf-py/gguf/gguf_reader.py: self.data = np.memmap(path, mode = mode)
 I'm getting this on my new ARCH Linux box when trying to build ktransformers. Seems to work okay on my Ubuntu 22.04 box though.
 I tried it on Python 3.11 first, and then on 3.12 just to see including updating torch to latest cu128 nightly. No dice.
 It may be the same thing as [ktransformers GH Issues #217](https://github.com/kvcache-ai/ktransformers/issues/217)
-Seems likely an issue with too new of `nvcc --version`
-`Build cuda_12.0.r12.0/compiler.32267302_0` works with CUDA 12.8
-`Build cuda_12.8.r12.8/compiler.35404655_0` is *too new* and throws this error:
+Seems likely an issue with too new of `nvcc --version`:
+
+* `Build cuda_12.0.r12.0/compiler.32267302_0` works with CUDA 12.8
+* `Build cuda_12.8.r12.8/compiler.35404655_0` is *too new* and throws this error:
+
 ```
       /mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/torch/utils/cpp_extension.py:492:
       UserWarning: There are no c++ version bounds defined for CUDA version 12.8
