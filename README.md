@@ -76,6 +76,7 @@ $ npm run build
 $ cd ../..
 
 # there is a *HARD RUNTIME REQUIREMENT* on at least a single *CUDA* GPU w/ 16GB VRAM or more
+# might be able to prepend `MAX_JOBS=8 uv pip ...` or some way to speed it up a bit?
 $ uv pip install flash_attn --no-build-isolation
 
 # ONLY IF you have dual CPU sockets and >1TB RAM
@@ -83,6 +84,12 @@ $ export USE_NUMA=1
 
 # finally do the real build
 $ KTRANSFORMERS_FORCE_BUILD=TRUE uv pip install . --no-build-isolation
+
+# DONE, Continue below!
+
+# WIP: If there is an error and you have very new cuda 12.8 maybe try this?
+# uv pip uninstall torch
+# uv pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cu128
 
 # if you want to rebuild again, first make clean like so
 $ rm -rf ktransformers/ktransformers_ext/build
@@ -282,3 +289,108 @@ ktransformers \
 * [ktransformers deepseek-r1 official install guide](https://kvcache-ai.github.io/ktransformers/en/install.html#installation)
 * [ktransformers deepseek-r1 tutorial guide](https://kvcache-ai.github.io/ktransformers/en/DeepseekR1_V3_tutorial.html)
 * [ktransformers deepseek-r1 faq](https://kvcache-ai.github.io/ktransformers/en/FAQ.html)
+
+## Error Logs
+I'm getting this on my new ARCH Linux box when trying to build ktransformers. Seems to work okay on 22.04 box though.
+I tried it on Python 3.11 first, and then on 3.12 just to see including updating torch to latest cu128 nightly. No dice.
+It may be the same thing as [ktransformers GH Issues #217](https://github.com/kvcache-ai/ktransformers/issues/217)
+```
+      /mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/torch/utils/cpp_extension.py:492:
+      UserWarning: There are no c++ version bounds defined for CUDA version 12.8
+        warnings.warn(f'There are no {compiler_name} version bounds defined for CUDA version {cuda_str_version}')
+      Traceback (most recent call last):
+        File "<string>", line 11, in <module>
+        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/build_meta.py",
+      line 435, in build_wheel
+          return _build(['bdist_wheel'])
+                 ^^^^^^^^^^^^^^^^^^^^^^^
+        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/build_meta.py",
+      line 426, in _build
+          return self._build_with_temp_dir(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/build_meta.py",
+      line 407, in _build_with_temp_dir
+          self.run_setup()
+        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/build_meta.py",
+      line 320, in run_setup
+          exec(code, locals())
+        File "<string>", line 295, in <module>
+        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/__init__.py",
+      line 117, in setup
+          return distutils.core.setup(**attrs)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/_distutils/core.py",
+      line 186, in setup
+          return run_commands(dist)
+                 ^^^^^^^^^^^^^^^^^^
+        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/_distutils/core.py",
+      line 202, in run_commands
+          dist.run_commands()
+        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/_distutils/dist.py",
+      line 983, in run_commands
+          self.run_command(cmd)
+        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/dist.py", line
+      999, in run_command
+          super().run_command(command)
+        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/_distutils/dist.py",
+      line 1002, in run_command
+          cmd_obj.run()
+        File "<string>", line 153, in run
+        File
+      "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/command/bdist_wheel.py",
+      line 379, in run
+          self.run_command("build")
+        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/_distutils/cmd.py",
+      line 339, in run_command
+          self.distribution.run_command(command)
+        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/dist.py", line
+      999, in run_command
+          super().run_command(command)
+        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/_distutils/dist.py",
+      line 1002, in run_command
+          cmd_obj.run()
+        File
+      "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/_distutils/command/build.py",
+      line 136, in run
+          self.run_command(cmd_name)
+        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/_distutils/cmd.py",
+      line 339, in run_command
+          self.distribution.run_command(command)
+        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/dist.py", line
+      999, in run_command
+          super().run_command(command)
+        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/_distutils/dist.py",
+      line 1002, in run_command
+          cmd_obj.run()
+        File
+      "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/command/build_ext.py",
+      line 99, in run
+          _build_ext.run(self)
+        File
+      "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/_distutils/command/build_ext.py",
+      line 365, in run
+          self.build_extensions()
+        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/torch/utils/cpp_extension.py",
+      line 1009, in build_extensions
+          build_ext.build_extensions(self)
+        File
+      "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/_distutils/command/build_ext.py",
+      line 481, in build_extensions
+          self._build_extensions_serial()
+        File
+      "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/_distutils/command/build_ext.py",
+      line 507, in _build_extensions_serial
+          self.build_extension(ext)
+        File "<string>", line 285, in build_extension
+        File "/home/garm/.local/share/uv/python/cpython-3.12.9-linux-x86_64-gnu/lib/python3.12/subprocess.py", line 573,
+      in run
+          raise CalledProcessError(retcode, process.args,
+      subprocess.CalledProcessError: Command '['cmake',
+      '/mnt/astrodata/llm/ktransformers/ktransformers/ktransformers/ktransformers_ext',
+      '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/mnt/astrodata/llm/ktransformers/ktransformers/build/lib.linux-x86_64-cpython-312/',
+      '-DPYTHON_EXECUTABLE=/mnt/astrodata/llm/ktransformers/ktransformers/venv/bin/python3',
+      '-DCMAKE_BUILD_TYPE=Release', '-DLLAMA_NATIVE=ON', '-DEXAMPLE_VERSION_INFO=0.2.1+cu128torch27fancy']' returned
+      non-zero exit status 1.
+
+      hint: This usually indicates a problem with the package or the build environment.
+```
