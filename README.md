@@ -3,13 +3,19 @@ Run DeepSeek-R1 671B unsloth quants with ktransformers
 In early testing ktransformers is running faster than llama.cpp right
 now for DeepSeek-R1 GGUF inferencing for some system configurations.
 
-There are some rough edges and not exactly sure how it will pan out but
-this will get you started to compare results for yourself.
+While ktransformers is still rough around the edges and not production ready imo,
+it does seem to have implemented some optimizations ahead of llama.cpp for R1 including:
 
-Keep in mind llama.cpp has some [experimental
-branches](https://github.com/ggml-org/llama.cpp/pull/11397#issuecomment-2645973828)
-allowing selective expert offload etc so this may all be moot sooner
-than later as things are moving so fast.
+* flash attention - can quantize kv cache and possibly supports context-shift?
+* Multi-head Latent Attention (MLA) with [SGLang](https://github.com/sgl-project/sglang)
+* [Selective layer offload](https://github.com/kvcache-ai/ktransformers/blob/main/doc/en/deepseek-v2-injection.md#routed-experts-)
+* experimental [flashinfer](https://github.com/flashinfer-ai/flashinfer) Coming Soon :TM:
+* Intel Xeon AMX extensions and copy model into RAM *twice* for big dual socket systems (as cross NUMA nodes is bottleneck)
+
+Keep in mind llama.cpp has some as experimental branches going as well including:
+* [flash attention PR and ongoing discussion](https://github.com/ggml-org/llama.cpp/pull/11557)
+* [MLA](https://github.com/ggml-org/llama.cpp/pull/11446)
+* [selective layer offload](https://github.com/ggml-org/llama.cpp/pull/11397#issuecomment-2645973828)
 
 ## NOTES for `ktransformers@c515cc4`
 
@@ -32,6 +38,10 @@ Initial new benchmark for this experimental PR looks really good at face value:
 | `ktransformers@ee24eb8` | 86.5 | 14.8 |
 | `llama.cpp@90e4dba4` | 35.4 | 7.3 |
 
+On my local 3090TI 24GB VRAM + 96GB DDR5@88GB/s + 9950X + PCIe Gen 5
+T700 2TB NVMe hits around 3.2 tok/sec generation with this same model
+despite not having enough RAM. Disk `mmap()` i/o discussion below.
+
 ## Guide
 #### 1. Download unsloth GGUF files
 Download desired
@@ -52,6 +62,8 @@ configuration_deepseek.py                   DeepSeek-R1-UD-Q2_K_XL-00003-of-0000
 DeepSeek-R1-UD-Q2_K_XL-00001-of-00005.gguf  DeepSeek-R1-UD-Q2_K_XL-00004-of-00005.gguf  tokenizer_config.json
 ```
 
+*NOTE* I've realized these files might be out of [deepseek-ai/DeepSeek-R1](https://huggingface.co/deepseek-ai/DeepSeek-R1/tree/main) and you can possibly just call `ktransformers --model_path deepseek-ai/DeepSeek-R1` and it will pull the files automagically maybe.
+
 #### 3. Install ktransformers
 *Note*: `ktransformers` probably *requires* GPU as it has a [hard requirement on CUDA dependencies](https://github.com/kvcache-ai/ktransformers/issues/337#issuecomment-2661711997) at least to compile.
 ```
@@ -60,42 +72,44 @@ DeepSeek-R1-UD-Q2_K_XL-00001-of-00005.gguf  DeepSeek-R1-UD-Q2_K_XL-00004-of-0000
 # curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Clone repo and build it with python
-$ git clone https://github.com/kvcache-ai/ktransformers.git --depth=1
-$ cd ktransformers
-$ git rev-parse --short HEAD # c515cc4
-$ uv venv ./venv --python 3.11
-$ source  venv/bin/activate
-$ uv pip install -r requirements-local_chat.txt
-$ uv pip install setuptools wheel packaging
+git clone https://github.com/kvcache-ai/ktransformers.git --depth=1
+cd ktransformers
+git rev-parse --short HEAD # c515cc4
+uv venv ./venv --python 3.11
+source  venv/bin/activate
+uv pip install -r requirements-local_chat.txt
+uv pip install setuptools wheel packaging
 
-# REMEMBER API and WEBSITE DOES NOT YET WORK SO PROBABLY SKIP THIS
+# REMEMBER WEBSITE DOES NOT YET WORK SO PROBABLY SKIP THIS
 # OPTIONAL: first build the webapp so you can use it through browser
-$ cd ktransformers/website/
-$ npm install @vue/cli
-$ npm run build
-$ cd ../..
+cd ktransformers/website/
+npm install @vue/cli
+npm run build
+cd ../..
 
 # there is a *HARD RUNTIME REQUIREMENT* on at least a single *CUDA* GPU w/ 16GB VRAM or more
 # might be able to prepend `MAX_JOBS=8 uv pip ...` or some way to speed it up a bit?
-$ uv pip install flash_attn --no-build-isolation
+uv pip install flash_attn --no-build-isolation
 
-# ONLY IF you have dual CPU sockets and >1TB RAM
-$ export USE_NUMA=1
+# ONLY IF you have dual CPU sockets and >1TB RAM to hold 2x copies of entire model in RAM (one copy per socket)
+# $ export USE_NUMA=1
 
 # finally do the real build
-$ KTRANSFORMERS_FORCE_BUILD=TRUE uv pip install . --no-build-isolation
+KTRANSFORMERS_FORCE_BUILD=TRUE uv pip install . --no-build-isolation
 
 # DONE, Continue below!
 
-# WIP: If there is an error and you have very new cuda 12.8 maybe try this?
-# uv pip uninstall torch
-# uv pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cu128
+# WIP: If there is an error and you have very new nvcc 12.8i maybe? example error log below.
+# this didn't work for me, but might for you. i built it on a different box then copied it all over.
+# $ uv pip uninstall torch
+# $ uv pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cu128
 
 # if you want to rebuild again, first make clean like so
-$ rm -rf ktransformers/ktransformers_ext/build
-$ rm -rf ktransformers/ktransformers_ext/cuda/build
-$ rm -rf ktransformers/ktransformers_ext/cuda/dist
-$ rm -rf ktransformers/ktransformers_ext/cuda/*.egg-info
+uv pip uninstall ktransformers
+rm -rf ktransformers/ktransformers_ext/build
+rm -rf ktransformers/ktransformers_ext/cuda/build
+rm -rf ktransformers/ktransformers_ext/cuda/dist
+rm -rf ktransformers/ktransformers_ext/cuda/*.egg-info
 ```
 
 #### 4. OPTIONAL Upgrade to v0.3 preview binary *only* for Intel Xeon CPUs with AMX Extensions
@@ -236,7 +250,6 @@ $ ./build/bin/llama-server \
     --threads 24 \
     --host 127.0.0.1 \
     --port 8080
-
 ...
 
 prompt eval time =    8014.15 ms /   226 tokens (   35.46 ms per token,    28.20 tokens per second)
@@ -258,12 +271,13 @@ $ find . -name config.yaml
 $ find . -name "DeepSeek-V3-*.yaml"
 # use the one in venv/ and ignore build/ and ktransformers/
 # e.g. --optimize_config_path ./ktransformers/optimize/optimize_rules/DeepSeek-V3-Chat-multi-gpu.yaml
+# could possibly make a CPU only DeepSek-V3-Chat-cpu.yaml ???
 ```
-4. Full experimental command (not sure everything is actually working, got crash on multi-gpu with 2x CUDAs)
+4. Experimental 2x GPU command (not sure everything is actually working)
 ```
 # this crashed, but maybe can increase offload with 1x GPU editing the yaml?
 # https://github.com/kvcache-ai/ktransformers/blob/c515cc49a595696fedaca6032e100951c42ad36f/doc/en/multi-gpu-tutorial.md
-ktransformers \
+$ ktransformers \
     --gguf_path "/mnt/raid/models/unsloth/DeepSeek-R1-GGUF/DeepSeek-R1-UD-Q2_K_XL/" \
     --model_path "/mnt/raid/models/unsloth/DeepSeek-R1-GGUF/DeepSeek-R1-UD-Q2_K_XL/" \
     --cpu_infer 24 \
@@ -276,8 +290,29 @@ ktransformers \
     --gpu_split 1,1 \
     --mode="long_context" \
     --optimize_config_path ./venv/lib/python3.11/site-packages/ktransformers/optimize/optimize_rules/DeepSeek-V3-Chat-multi-gpu.yaml
+    # --optimize_config_path ./venv/lib/python3.11/site-packages/ktransformers/optimize/optimize_rules/DeepSeek-V3-Chat.yaml # single GPU
+    # maybe you can make a -cpu-only.yaml and figure out the injection syntax to no longer require GPU?
 ```
 
+5. Disk Read IOPs Discussion
+
+On my local 3090TI 24GB VRAM + 96GB DDR5@88GB/s + 9950X + PCIe Gen 5
+T700 2TB NVMe hits around 3.2 tok/sec generation with this same model
+despite not having enough RAM. Interestingly ktransformers is saturating
+read IOPs more than llama.cpp and pegging `kswapd0` (without any Linux swap enabled).
+
+However when testing on a quad 4TB T705 NVMe `mdadm` RAID0 stripped array
+I didn't notice any gains over a single NVMe for either inference engine
+on that machine.
+
+```
+ktransformers/util/custom_gguf.py: self.file_data_map[file_name] = np.memmap(file_name, mode = 'r')
+
+# vs
+
+src/llama-mmap.cpp: addr = mmap(NULL, file->size(), PROT_READ, flags, fd, 0);
+gguf-py/gguf/gguf_reader.py: self.data = np.memmap(path, mode = mode)
+```
 
 ## References
 * [ktransformers github update documentation PR](https://github.com/kvcache-ai/ktransformers/pull/384)
@@ -291,9 +326,12 @@ ktransformers \
 * [ktransformers deepseek-r1 faq](https://kvcache-ai.github.io/ktransformers/en/FAQ.html)
 
 ## Error Logs
-I'm getting this on my new ARCH Linux box when trying to build ktransformers. Seems to work okay on 22.04 box though.
+I'm getting this on my new ARCH Linux box when trying to build ktransformers. Seems to work okay on my Ubuntu 22.04 box though.
 I tried it on Python 3.11 first, and then on 3.12 just to see including updating torch to latest cu128 nightly. No dice.
 It may be the same thing as [ktransformers GH Issues #217](https://github.com/kvcache-ai/ktransformers/issues/217)
+Seems likely an issue with too new of `nvcc --version`
+`Build cuda_12.0.r12.0/compiler.32267302_0` works with CUDA 12.8
+`Build cuda_12.8.r12.8/compiler.35404655_0` is *too new* and throws this error:
 ```
       /mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/torch/utils/cpp_extension.py:492:
       UserWarning: There are no c++ version bounds defined for CUDA version 12.8
