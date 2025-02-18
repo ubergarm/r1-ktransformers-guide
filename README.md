@@ -20,10 +20,17 @@ than later as things are moving so fast.
 
 If you have an Intel Xeon with AMX extensions look closely at secton 4 below regarding the `v0.3 binary`.
 
-Additional references at bottom.
+## INCOMING FIX
+I tested an incoming [ktransformers PR #382](https://github.com/kvcache-ai/ktransformers/pull/382#issuecomment-2664109713)
+which seems fix the OpenAI compatible API endpoint! With luck it will land in `main soon.`
 
-## TODO
-- [ ] Testing new releases until the the API endpoint begins working (for open-webui or litellm etc).
+Initial new benchmark for this experimental PR looks really good at face value:
+
+| engine | pp | tg |
+| --- | --- | --- |
+| | tok/sec | tok/sec |
+| `ktransformers@ee24eb8` | 86.5 | 14.8 |
+| `llama.cpp@90e4dba4` | 35.4 | 7.3 |
 
 ## Guide
 #### 1. Download unsloth GGUF files
