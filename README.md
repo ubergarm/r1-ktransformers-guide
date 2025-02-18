@@ -238,8 +238,39 @@ prompt eval time =    8014.15 ms /   226 tokens (   35.46 ms per token,    28.20
 ```
 
 ## Advanced
-1. Seems like API configs live in `ktransformers/configs/config.yaml` which maybe you can edit?
+1. Seems like maybe some configs live in `ktransformers/configs/config.yaml` used with `--mode="long_context"`?
+```bash
+$ find . -name config.yaml
+./venv/lib/python3.11/site-packages/ktransformers/configs/config.yaml # <--- after running with `--mode="long_context"`
+./build/lib.linux-x86_64-cpython-311/ktransformers/configs/config.yaml
+./ktransformers/configs/config.yaml
+```
 2. For some reason it tries to keep the database on the server side instead of client side? `rm ./venv/lib/python3.11/site-packages/ktransformers/server.db`
+3. MultiGPU and more offload customization available with `--optimize_config_path`
+```bash
+$ find . -name "DeepSeek-V3-*.yaml"
+# use the one in venv/ and ignore build/ and ktransformers/
+# e.g. --optimize_config_path ./ktransformers/optimize/optimize_rules/DeepSeek-V3-Chat-multi-gpu.yaml
+```
+4. Full experimental command (not sure everything is actually working, got crash on multi-gpu with 2x CUDAs)
+```
+# this crashed, but maybe can increase offload with 1x GPU editing the yaml?
+# https://github.com/kvcache-ai/ktransformers/blob/c515cc49a595696fedaca6032e100951c42ad36f/doc/en/multi-gpu-tutorial.md
+ktransformers \
+    --gguf_path "/mnt/raid/models/unsloth/DeepSeek-R1-GGUF/DeepSeek-R1-UD-Q2_K_XL/" \
+    --model_path "/mnt/raid/models/unsloth/DeepSeek-R1-GGUF/DeepSeek-R1-UD-Q2_K_XL/" \
+    --cpu_infer 24 \
+    --host 127.0.0.1 \
+    --port 8080 \
+    --web false \
+    --no_flash_attn false \
+    --total_context 8192 \
+    --cache_q4 true \
+    --gpu_split 1,1 \
+    --mode="long_context" \
+    --optimize_config_path ./venv/lib/python3.11/site-packages/ktransformers/optimize/optimize_rules/DeepSeek-V3-Chat-multi-gpu.yaml
+```
+
 
 ## References
 * [ktransformers github update documentation PR](https://github.com/kvcache-ai/ktransformers/pull/384)
