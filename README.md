@@ -260,22 +260,30 @@ prompt eval time =    8014.15 ms /   226 tokens (   35.46 ms per token,    28.20
 ```
 
 ## Advanced
-1. Seems like maybe some configs live in `ktransformers/configs/config.yaml` used with `--mode="long_context"`? (This is probably a red herring, see newer stuff below lol)
+
+#### Advanced 1
+Seems like maybe some configs live in `ktransformers/configs/config.yaml` used with `--mode="long_context"`? (This is probably a red herring, see newer stuff below lol)
 ```bash
 $ find . -name config.yaml
 ./venv/lib/python3.11/site-packages/ktransformers/configs/config.yaml # <--- after running with `--mode="long_context"`
 ./build/lib.linux-x86_64-cpython-311/ktransformers/configs/config.yaml
 ./ktransformers/configs/config.yaml
 ```
-2. For some reason it tries to keep the database on the server side instead of client side? `rm ./venv/lib/python3.11/site-packages/ktransformers/server.db`
-3. MultiGPU and more offload customization available with `--optimize_config_path`
+
+#### Advanced 2
+For some reason it tries to keep the database on the server side instead of client side? `rm ./venv/lib/python3.11/site-packages/ktransformers/server.db`
+
+#### Advanced 3
+MultiGPU and more offload customization available with `--optimize_config_path`
 ```bash
 $ find . -name "DeepSeek-V3-*.yaml"
 # use the one in venv/ and ignore build/ and ktransformers/
 # e.g. --optimize_config_path ./ktransformers/optimize/optimize_rules/DeepSeek-V3-Chat-multi-gpu.yaml
 # could possibly make a CPU only DeepSek-V3-Chat-cpu.yaml ???
 ```
-4. Experimental 2x GPU command (not sure everything is actually working)
+
+#### Advanced 4
+Experimental 2x GPU command (not sure everything is actually working)
 ```
 # this crashed, but maybe can increase offload with 1x GPU editing the yaml?
 # https://github.com/kvcache-ai/ktransformers/blob/c515cc49a595696fedaca6032e100951c42ad36f/doc/en/multi-gpu-tutorial.md
@@ -295,7 +303,10 @@ $ ktransformers \
     # --optimize_config_path ./venv/lib/python3.11/site-packages/ktransformers/optimize/optimize_rules/DeepSeek-V3-Chat.yaml # single GPU
     # maybe you can make a -cpu-only.yaml and figure out the injection syntax to no longer require GPU?
 ```
-5. More Advanced Commands
+
+#### Advanced 5
+More Advanced Commands
+
 I found the best documentation for how to run ktransformers in [ktransformers PR#382 ceerRep comment](https://github.com/kvcache-ai/ktransformers/pull/382#issue-2856190692)
 
 Possibly the `--mode="long_context"` `config.yaml` is a red herring and it is easier to simply pass those values via CLI arguments.
@@ -336,7 +347,8 @@ PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True python3 ktransformers/server/ma
     --port 8080
 ```
 
-6. Optional open-webui interface
+#### Advanced 6
+Optional open-webui interface
 
 I want a more simplified version of this for CLI which I think exists. I
 don't want full `tui` like `textual` but I want actual scrollback
@@ -381,7 +393,8 @@ open-webui serve \
 # i don't know why it downloads onnx models, annoys me lmao...
 ```
 
-7. Disk Read IOPs Discussion
+#### Advanced 7
+Disk Read IOPs Discussion
 
 On my local 3090TI 24GB VRAM + 96GB DDR5@88GB/s + 9950X + PCIe Gen 5
 T700 2TB NVMe hits around 3.2 tok/sec generation with this same model
@@ -413,111 +426,13 @@ gguf-py/gguf/gguf_reader.py: self.data = np.memmap(path, mode = mode)
 * [ktransformers deepseek-r1 faq](https://kvcache-ai.github.io/ktransformers/en/FAQ.html)
 
 ## Error Logs
-I'm getting this on my new ARCH Linux box when trying to build ktransformers. Seems to work okay on my Ubuntu 22.04 box though.
+I'm getting build errors on my new ARCH Linux box when trying to build ktransformers. Seems to work okay on my Ubuntu 22.04 box though.
 I tried it on Python 3.11 first, and then on 3.12 just to see including updating torch to latest cu128 nightly. No dice.
-It may be the same thing as [ktransformers GH Issues #217](https://github.com/kvcache-ai/ktransformers/issues/217)
+I linked some build log errors on what may be the same thing as [ktransformers GH Issues #217](https://github.com/kvcache-ai/ktransformers/issues/217)
+
 Seems likely an issue with too new of `nvcc --version`:
 
 * `Build cuda_12.0.r12.0/compiler.32267302_0` works with CUDA 12.8
 * `Build cuda_12.8.r12.8/compiler.35404655_0` is *too new* and throws this error:
 
-```
-      /mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/torch/utils/cpp_extension.py:492:
-      UserWarning: There are no c++ version bounds defined for CUDA version 12.8
-        warnings.warn(f'There are no {compiler_name} version bounds defined for CUDA version {cuda_str_version}')
-      Traceback (most recent call last):
-        File "<string>", line 11, in <module>
-        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/build_meta.py",
-      line 435, in build_wheel
-          return _build(['bdist_wheel'])
-                 ^^^^^^^^^^^^^^^^^^^^^^^
-        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/build_meta.py",
-      line 426, in _build
-          return self._build_with_temp_dir(
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/build_meta.py",
-      line 407, in _build_with_temp_dir
-          self.run_setup()
-        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/build_meta.py",
-      line 320, in run_setup
-          exec(code, locals())
-        File "<string>", line 295, in <module>
-        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/__init__.py",
-      line 117, in setup
-          return distutils.core.setup(**attrs)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/_distutils/core.py",
-      line 186, in setup
-          return run_commands(dist)
-                 ^^^^^^^^^^^^^^^^^^
-        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/_distutils/core.py",
-      line 202, in run_commands
-          dist.run_commands()
-        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/_distutils/dist.py",
-      line 983, in run_commands
-          self.run_command(cmd)
-        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/dist.py", line
-      999, in run_command
-          super().run_command(command)
-        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/_distutils/dist.py",
-      line 1002, in run_command
-          cmd_obj.run()
-        File "<string>", line 153, in run
-        File
-      "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/command/bdist_wheel.py",
-      line 379, in run
-          self.run_command("build")
-        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/_distutils/cmd.py",
-      line 339, in run_command
-          self.distribution.run_command(command)
-        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/dist.py", line
-      999, in run_command
-          super().run_command(command)
-        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/_distutils/dist.py",
-      line 1002, in run_command
-          cmd_obj.run()
-        File
-      "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/_distutils/command/build.py",
-      line 136, in run
-          self.run_command(cmd_name)
-        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/_distutils/cmd.py",
-      line 339, in run_command
-          self.distribution.run_command(command)
-        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/dist.py", line
-      999, in run_command
-          super().run_command(command)
-        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/_distutils/dist.py",
-      line 1002, in run_command
-          cmd_obj.run()
-        File
-      "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/command/build_ext.py",
-      line 99, in run
-          _build_ext.run(self)
-        File
-      "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/_distutils/command/build_ext.py",
-      line 365, in run
-          self.build_extensions()
-        File "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/torch/utils/cpp_extension.py",
-      line 1009, in build_extensions
-          build_ext.build_extensions(self)
-        File
-      "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/_distutils/command/build_ext.py",
-      line 481, in build_extensions
-          self._build_extensions_serial()
-        File
-      "/mnt/astrodata/llm/ktransformers/ktransformers/venv/lib/python3.12/site-packages/setuptools/_distutils/command/build_ext.py",
-      line 507, in _build_extensions_serial
-          self.build_extension(ext)
-        File "<string>", line 285, in build_extension
-        File "/home/garm/.local/share/uv/python/cpython-3.12.9-linux-x86_64-gnu/lib/python3.12/subprocess.py", line 573,
-      in run
-          raise CalledProcessError(retcode, process.args,
-      subprocess.CalledProcessError: Command '['cmake',
-      '/mnt/astrodata/llm/ktransformers/ktransformers/ktransformers/ktransformers_ext',
-      '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/mnt/astrodata/llm/ktransformers/ktransformers/build/lib.linux-x86_64-cpython-312/',
-      '-DPYTHON_EXECUTABLE=/mnt/astrodata/llm/ktransformers/ktransformers/venv/bin/python3',
-      '-DCMAKE_BUILD_TYPE=Release', '-DLLAMA_NATIVE=ON', '-DEXAMPLE_VERSION_INFO=0.2.1+cu128torch27fancy']' returned
-      non-zero exit status 1.
-
-      hint: This usually indicates a problem with the package or the build environment.
-```
+Might be possible to use a `Dockerfile` to build a python cheese `.whl` file or similar if you can't get it building.
