@@ -112,6 +112,10 @@ rm -rf ktransformers/ktransformers_ext/build
 rm -rf ktransformers/ktransformers_ext/cuda/build
 rm -rf ktransformers/ktransformers_ext/cuda/dist
 rm -rf ktransformers/ktransformers_ext/cuda/*.egg-info
+
+# if you want to build a distributable python cheese .whl (e.g. from inside a Dockerfile to use elsewhere)
+KTRANSFORMERS_FORCE_BUILD=TRUE uv build
+# uv pip install ./dist/ktransformers-0.2.1.post1+cu120torch26fancy-cp311-cp311-linux_x86_64.whl
 ```
 
 #### 4. OPTIONAL Upgrade to v0.3 preview binary *only* for Intel Xeon CPUs with AMX Extensions
@@ -434,5 +438,3 @@ Seems likely an issue with too new of `nvcc --version`:
 
 * `Build cuda_12.0.r12.0/compiler.32267302_0` works with CUDA 12.8
 * `Build cuda_12.8.r12.8/compiler.35404655_0` is *too new* and throws this error:
-
-Might be possible to use a `Dockerfile` to build a python cheese `.whl` file or similar if you can't get it building.
