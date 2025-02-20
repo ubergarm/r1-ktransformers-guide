@@ -89,15 +89,14 @@ npm run build
 cd ../..
 
 # there is a *HARD RUNTIME REQUIREMENT* on at least a single *CUDA* GPU w/ 16GB VRAM or more
-# might be able to prepend `MAX_JOBS=8 uv pip ...` or some way to speed it up a bit?
-uv pip install flash_attn --no-build-isolation
+MAX_JOBS=4 uv pip install flash_attn --no-build-isolation
 
 # ONLY IF you have Intel dual socket and >1TB RAM to hold 2x copies of entire model in RAM (one copy per socket)
 # Dual socket AMD EPYC NPS0 probably makes this not needed?
 # $ export USE_NUMA=1
 
 # finally do the real build
-KTRANSFORMERS_FORCE_BUILD=TRUE uv pip install . --no-build-isolation
+MAX_JOBS=4 KTRANSFORMERS_FORCE_BUILD=TRUE uv pip install . --no-build-isolation
 
 # DONE, Continue below!
 
@@ -114,7 +113,7 @@ rm -rf ktransformers/ktransformers_ext/cuda/dist
 rm -rf ktransformers/ktransformers_ext/cuda/*.egg-info
 
 # if you want to build a distributable python cheese .whl (e.g. from inside a Dockerfile to use elsewhere)
-KTRANSFORMERS_FORCE_BUILD=TRUE uv build
+MAX_JOBS=4 KTRANSFORMERS_FORCE_BUILD=TRUE uv build
 # uv pip install ./dist/ktransformers-0.2.1.post1+cu120torch26fancy-cp311-cp311-linux_x86_64.whl
 ```
 
