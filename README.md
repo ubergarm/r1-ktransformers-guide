@@ -141,6 +141,25 @@ MAX_JOBS=4 KTRANSFORMERS_FORCE_BUILD=TRUE uv build
 
 ## Discussions
 
+#### Benchmarks
+Short one shot prompt comparison with roughly similar configurations.
+
+| engine | pp | tg |
+| --- | --- | --- |
+| | tok/sec | tok/sec |
+| `ktransformers@25c5bdd` | 19.0 | 14.7 |
+| `llama.cpp@51f311e0` | 18.4 | 8.63 |
+
+**Hardware**
+
+* AMD Ryzen Threadripper PRO 7965WX 24-Cores
+* 256 GB RAM (~225GB/s memory bandwidth)
+* NVIDIA RTX A6000 with 48 GB VRAM
+* Linux Kernel 6.13.0
+* Ubuntu 24.04.1 LTS (Noble Numbat)
+
+Check the [level1techs forum DeepSeek Deep Dive thread](https://forum.level1techs.com/t/deepseek-deep-dive-r1-at-home/225826/) for more benchmarks and details.
+
 #### Optimizations
 ktransformers implements some optimizations ahead of llama.cpp e.g.
 
@@ -236,3 +255,4 @@ open-webui serve \
 * [kvcache-ai/KTransformers](https://github.com/kvcache-ai/KTransformers)
 * [ggml-org/llama.cpp](https://github.com/ggml-org/llama.cpp)
 * [previous version of this guide with more notes but kinda messy]()
+* [level1techs forum DeepSeek Deep Dive thread](https://forum.level1techs.com/t/deepseek-deep-dive-r1-at-home/225826/)
