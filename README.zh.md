@@ -1,5 +1,7 @@
 ktransformers 上的 DeepSeek-R1 671B
 ===
+[English Guide Here](README.md)
+
 DeepSeek-R1 671B 本地推理测试
 [unsloth/DeepSeek-R1-GGUF](https://huggingface.co/unsloth/DeepSeek-R1-GGUF)
 量化模型在 [ktransformers](https://github.com/kvcache-ai/KTransformers)
@@ -142,13 +144,21 @@ MAX_JOBS=4 KTRANSFORMERS_FORCE_BUILD=TRUE uv build
 ## 讨论
 
 #### 基准测试
-基于近似配置的简短单次提示词对比测试
+根据R1修订建议，在聊天线程中设置两个顺序性提示（已移除<thinking>标签）。
+
+提示1
+> Count from one to ten in French.
+
+提示2
+> Now give pronunciation tips.
 
 | 引擎 | pp | tg |
 | --- | --- | --- |
 | | 令牌/秒 | 令牌/秒 |
-| `ktransformers@25c5bdd` | 19.0 | 14.7 |
-| `llama.cpp@51f311e0` | 18.4 | 8.63 |
+| 1 `ktransformers@25c5bdd` | 19.0 | 14.7 |
+| 2 `ktransformers@25c5bdd` | 69.1 | 14.8 |
+| 1 `llama.cpp@51f311e0` | 18.4 | 8.63 |
+| 2 `llama.cpp@51f311e0` | 12.0 | 7.39 |
 
 **硬件配置**
 

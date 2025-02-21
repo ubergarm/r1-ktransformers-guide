@@ -144,13 +144,22 @@ MAX_JOBS=4 KTRANSFORMERS_FORCE_BUILD=TRUE uv build
 ## Discussions
 
 #### Benchmarks
-Short one shot prompt comparison with roughly similar configurations.
+
+Two sequential prompts in a chat thread with `<thinking>` removed per R1 recommendations..
+
+Prompt 1
+> Count from one to ten in French
+
+Prompt 2
+> Now give pronunciation tips.
 
 | engine | pp | tg |
 | --- | --- | --- |
 | | tok/sec | tok/sec |
-| `ktransformers@25c5bdd` | 19.0 | 14.7 |
-| `llama.cpp@51f311e0` | 18.4 | 8.63 |
+| 1 `ktransformers@25c5bdd` | 19.0 | 14.7 |
+| 2 `ktransformers@25c5bdd` | 69.1 | 14.8 |
+| 1 `llama.cpp@51f311e0` | 18.4 | 8.63 |
+| 2 `llama.cpp@51f311e0` | 12.0 | 7.39 |
 
 **Hardware**
 
