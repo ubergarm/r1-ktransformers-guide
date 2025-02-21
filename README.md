@@ -1,5 +1,7 @@
 DeepSeek-R1 671B on ktransformers
 ===
+[简体中文版指南](README.zh.md)
+
 Local inferencing of DeepSeek-R1 671B
 [unsloth/DeepSeek-R1-GGUF](https://huggingface.co/unsloth/DeepSeek-R1-GGUF)
 quants on [ktransformers](https://github.com/kvcache-ai/KTransformers)
@@ -254,5 +256,5 @@ open-webui serve \
 ## References
 * [kvcache-ai/KTransformers](https://github.com/kvcache-ai/KTransformers)
 * [ggml-org/llama.cpp](https://github.com/ggml-org/llama.cpp)
-* [previous version of this guide with more notes but kinda messy]()
+* [previous version of this guide with more notes but kinda messy](https://github.com/ubergarm/r1-ktransformers-guide/blob/v0.1/README.md)
 * [level1techs forum DeepSeek Deep Dive thread](https://forum.level1techs.com/t/deepseek-deep-dive-r1-at-home/225826/)
