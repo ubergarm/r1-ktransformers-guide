@@ -1,5 +1,7 @@
 DeepSeek-R1 671B unsloth quants on ktransformers
 ===
+*WIP* Updating coming soon with easy install instructions from [binary python cheese `.whl` file here](https://github.com/ubergarm/ktransformers/releases).
+
 In early testing ktransformers is running about 2x faster than llama.cpp
 right now for DeepSeek-R1 GGUF inferencing for some supported system
 configurations and quants.
@@ -71,6 +73,11 @@ DeepSeek-R1-UD-Q2_K_XL-00001-of-00005.gguf  DeepSeek-R1-UD-Q2_K_XL-00004-of-0000
 # install deps e.g. `apt-get install build-essential npm` as needed
 # install uv https://docs.astral.sh/uv/getting-started/installation/
 # curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Configure uv to download python interpreter e.g. `$HOME/.local/share/uv/`
+# as this is possibly more portable than using system pythons
+# https://docs.astral.sh/uv/concepts/python-versions/#adjusting-python-version-preferences
+export UV_PYTHON_PREFERENCE=only-managed
 
 # Clone repo and build it with python
 git clone https://github.com/kvcache-ai/ktransformers.git --depth=1
