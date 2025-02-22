@@ -67,13 +67,14 @@ Tested on `NVIDIA Driver Version 570.86.1x` and `CUDA Version: 12.8`.
 
 git clone https://github.com/kvcache-ai/ktransformers.git
 cd ktransformers
-git checkout 25c5bdd
-git rev-parse --short HEAD # 25c5bdd
+git checkout 94ab2de
+git rev-parse --short HEAD # 94ab2de
 uv venv ./venv --python 3.11 --python-preference=only-managed
 source  venv/bin/activate
 
 # If you would prefer to build it yourself, skip next two and go to build instructions
-uv pip install https://github.com/ubergarm/ktransformers/releases/download/25c5bdd/ktransformers-0.2.1.post1+cu120torch26fancy-cp311-cp311-linux_x86_64.whl
+# This is newer than old buggy v0.2.1 ktransformers@65d73ea release despite the same python version tag
+uv pip install https://github.com/ubergarm/ktransformers/releases/download/94ab2de/ktransformers-0.2.1.post1+cu120torch26fancy-cp311-cp311-linux_x86_64.whl
 uv pip install https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.0.5/flash_attn-2.6.3+cu124torch2.6-cp311-cp311-linux_x86_64.whl
 ```
 
@@ -116,15 +117,19 @@ npm install @vue/cli
 npm run build
 cd ../..
 
+# If you have enough CPU cores and memory you can speed up builds
+# $ export MAX_JOBS=8
+# $ export CMAKE_BUILD_PARALLEL_LEVEL=8
+
 # Install flash_attn
-MAX_JOBS=4 uv pip install flash_attn --no-build-isolation
+uv pip install flash_attn --no-build-isolation
 
 # ONLY IF you have Intel dual socket and >1TB RAM to hold 2x copies of entire model in RAM (one copy per socket)
 # Dual socket AMD EPYC NPS0 probably makes this not needed?
 # $ export USE_NUMA=1
 
 # Install ktransformers
-MAX_JOBS=4 KTRANSFORMERS_FORCE_BUILD=TRUE uv pip install . --no-build-isolation
+KTRANSFORMERS_FORCE_BUILD=TRUE uv pip install . --no-build-isolation
 
 # DONE, Continue below!
 # *NOTE* You may get build errors on very new ARCH with latest nvcc see build error log at bottom of this document.
@@ -137,7 +142,7 @@ rm -rf ktransformers/ktransformers_ext/cuda/dist
 rm -rf ktransformers/ktransformers_ext/cuda/*.egg-info
 
 # if you want to build a distributable python cheese .whl (e.g. from inside a Dockerfile to use elsewhere)
-MAX_JOBS=4 KTRANSFORMERS_FORCE_BUILD=TRUE uv build
+KTRANSFORMERS_FORCE_BUILD=TRUE uv build
 # uv pip install ./dist/ktransformers-0.2.1.post1+cu120torch26fancy-cp311-cp311-linux_x86_64.whl
 ```
 
@@ -156,6 +161,8 @@ Prompt 2
 | engine | pp | tg |
 | --- | --- | --- |
 | | tok/sec | tok/sec |
+| 1 `ktransformers@94ab2de` | 19.7 | 15.0 |
+| 2 `ktransformers@94ab2de` | 63.5 | 15.2 |
 | 1 `ktransformers@25c5bdd` | 19.0 | 14.7 |
 | 2 `ktransformers@25c5bdd` | 69.1 | 14.8 |
 | 1 `llama.cpp@51f311e0` | 18.4 | 8.63 |
@@ -213,6 +220,8 @@ amx_bf16 avx512_fp16 amx_tile amx_int8
 ```
 
 If so, you might want to try [ktransformers custom compiled binary release](https://kvcache-ai.github.io/ktransformers/en/DeepseekR1_V3_tutorial.html#v03-showcase)
+
+Keep in mind this version was built from earlier code which has API endpoint bugs so can only be used with local chat demo.
 
 #### Build Error Logs
 I'm getting build errors on my new ARCH Linux box when trying to build ktransformers. Seems to work okay on my Ubuntu 22.04 box though.

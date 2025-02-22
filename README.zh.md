@@ -63,15 +63,16 @@ HF_HUB_ENABLE_HF_TRANSFER=1 \
 
 git clone https://github.com/kvcache-ai/ktransformers.git
 cd ktransformers
-git checkout 25c5bdd
-git rev-parse --short HEAD # 应显示 25c5bdd
+git checkout 94ab2de
+git rev-parse --short HEAD # 应显示 94ab2de
 
 # 创建虚拟环境(仅托管式Python)
 uv venv ./venv --python 3.11 --python-preference=only-managed
 source  venv/bin/activate
 
-# 若需自行编译，请跳过以下两步并参考构建指南
-uv pip install https://github.com/ubergarm/ktransformers/releases/download/25c5bdd/ktransformers-0.2.1.post1+cu120torch26fancy-cp311-cp311-linux_x86_64.whl
+# 如果你希望自行构建，请跳过后续两步并转到构建说明
+# 尽管Python版本标签相同，但这是比旧版有问题的v0.2.1 ktransformers@版本更新的版本
+uv pip install https://github.com/ubergarm/ktransformers/releases/download/94ab2de/ktransformers-0.2.1.post1+cu120torch26fancy-cp311-cp311-linux_x86_64.whl
 uv pip install https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.0.5/flash_attn-2.6.3+cu124torch2.6-cp311-cp311-linux_x86_64.whl
 ```
 
@@ -115,8 +116,12 @@ npm install @vue/cli
 npm run build
 cd ../..
 
+# 如果拥有充足的CPU核心和内存资源，可显著提升构建速度
+# $ export MAX_JOBS=8
+# $ export CMAKE_BUILD_PARALLEL_LEVEL=8
+
 # 安装flash_attn
-MAX_JOBS=4 uv pip install flash_attn --no-build-isolation
+uv pip install flash_attn --no-build-isolation
 
 # 仅适用于以下情况：
 # 配备Intel双路CPU且内存>1TB可容纳两份完整模型内存副本(每路CPU一份副本)
@@ -124,7 +129,7 @@ MAX_JOBS=4 uv pip install flash_attn --no-build-isolation
 # $ export USE_NUMA=1
 
 # 安装ktransformers
-MAX_JOBS=4 KTRANSFORMERS_FORCE_BUILD=TRUE uv pip install . --no-build-isolation
+KTRANSFORMERS_FORCE_BUILD=TRUE uv pip install . --no-build-isolation
 
 # 完成，继续后续步骤！
 # *注意* 在最新架构设备上使用最新nvcc编译时可能报错，请参考本文档末尾的错误日志
@@ -137,7 +142,7 @@ rm -rf ktransformers/ktransformers_ext/cuda/dist
 rm -rf ktransformers/ktransformers_ext/cuda/*.egg-info
 
 # 如需构建可分发的Python wheel包(例如在Docker容器内构建以便其他环境使用)
-MAX_JOBS=4 KTRANSFORMERS_FORCE_BUILD=TRUE uv build
+KTRANSFORMERS_FORCE_BUILD=TRUE uv build
 # uv pip install ./dist/ktransformers-0.2.1.post1+cu120torch26fancy-cp311-cp311-linux_x86_64.whl
 ```
 
@@ -155,6 +160,8 @@ MAX_JOBS=4 KTRANSFORMERS_FORCE_BUILD=TRUE uv build
 | 引擎 | pp | tg |
 | --- | --- | --- |
 | | 令牌/秒 | 令牌/秒 |
+| 1 `ktransformers@94ab2de` | 19.7 | 15.0 |
+| 2 `ktransformers@94ab2de` | 63.5 | 15.2 |
 | 1 `ktransformers@25c5bdd` | 19.0 | 14.7 |
 | 2 `ktransformers@25c5bdd` | 69.1 | 14.8 |
 | 1 `llama.cpp@51f311e0` | 18.4 | 8.63 |
@@ -209,6 +216,8 @@ amx_bf16 avx512_fp16 amx_tile amx_int8
 ```
 
 若检测到支持，建议尝试[自定义编译的ktransformers二进制版本](https://kvcache-ai.github.io/ktransformers/en/DeepseekR1_V3_tutorial.html#v03-showcase)
+
+**请注意：此版本基于存在API端点缺陷的早期代码构建，因此仅适用于本地聊天演示。**
 
 #### 编译错误日志
 在全新Arch Linux系统上编译ktransformers时遇到编译错误，但Ubuntu 22.04环境正常。尝试先后使用Python
