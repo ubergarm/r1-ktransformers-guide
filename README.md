@@ -149,11 +149,18 @@ KTRANSFORMERS_FORCE_BUILD=TRUE uv build
 ## Discussions
 
 #### Benchmarks
+**Hardware**
 
-Two sequential prompts in a chat thread with `<thinking>` removed per R1 recommendations..
+* AMD Ryzen Threadripper PRO 7965WX 24-Cores
+* 256 GB RAM (~225GB/s memory bandwidth)
+* NVIDIA RTX A6000 with 48 GB VRAM
+* Linux Kernel 6.13.0
+* Ubuntu 24.04.1 LTS (Noble Numbat)
+
+Two sequential prompts in a chat thread with `<thinking>` removed per R1 recommendations.
 
 Prompt 1
-> Count from one to ten in French
+> Count from one to ten in French.
 
 Prompt 2
 > Now give pronunciation tips.
@@ -168,13 +175,8 @@ Prompt 2
 | 1 `llama.cpp@51f311e0` | 18.4 | 8.63 |
 | 2 `llama.cpp@51f311e0` | 12.0 | 7.39 |
 
-**Hardware**
-
-* AMD Ryzen Threadripper PRO 7965WX 24-Cores
-* 256 GB RAM (~225GB/s memory bandwidth)
-* NVIDIA RTX A6000 with 48 GB VRAM
-* Linux Kernel 6.13.0
-* Ubuntu 24.04.1 LTS (Noble Numbat)
+Interestingly, `ktransformers` with the `--no-use_cuda_graph` flag
+performs similarly as llama.cpp. See below for more details.
 
 Check the [level1techs forum DeepSeek Deep Dive thread](https://forum.level1techs.com/t/deepseek-deep-dive-r1-at-home/225826/) for more benchmarks and details.
 
@@ -191,6 +193,34 @@ Keep in mind llama.cpp has some as experimental branches going as well including
 * [flash attention PR and ongoing discussion](https://github.com/ggml-org/llama.cpp/pull/11557)
 * [MLA](https://github.com/ggml-org/llama.cpp/pull/11446)
 * [selective layer offload](https://github.com/ggml-org/llama.cpp/pull/11397#issuecomment-2645973828)
+
+#### CUDA Graphs
+
+While you could use `--optimize_config_path` and offload additional expert
+blocks into VRAM, it currently requires to use `--no-use_cuda_graph`
+which destroys performance. So there is no advantage to more VRAM than
+needed to support your desired context.
+
+> Currently, executing experts on the GPU will conflict with CUDA Graph. Without CUDA Graph, there will be a significant slowdown. Therefore, unless you have a substantial amount of VRAM (placing a single layer of experts for DeepSeek-V3/R1 on the GPU requires at least 5.6GB of VRAM), we do not recommend enabling this feature. We are actively working on optimization. Note KExpertsTorch is untested. -[ktransformers FAQ](https://github.com/kvcache-ai/ktransformers/blob/main/doc/en/FAQ.md#q-if-i-got-more-vram-than-the-models-requirement-how-can-i-fully-utilize-it)
+
+Engine: `ktransformers@94ab2de`
+
+If `# Offload` = 0, use `--use_cuda_graph`
+If `# Offload` > 0, use `--no-use_cuda_graph`
+
+| Prompt | # Offload | VRAM | pp | tg |
+| --- | --- | --- | --- | --- |
+| | Experts | GB | tok/sec | tok/sec |
+| 1 | 0 `use_cuda_graph` | 14 | 21.0 | 15.1 |
+| 2 | 0 `use_cuda_graph` | 14 | 74.8 | 15.2 |
+| 1 | 0 `no-use_cuda_graph` | 14 | 20.35 | 9.0 |
+| 2 | 0 `no-use_cuda_graph` | 14 | 69.2 | 9.0 |
+| 1 | 2 `no-use_cuda_graph` | 26 | 26.9 | 8.2 |
+| 2 | 2 `no-use_cuda_graph` | 26 | 66.9 | 8.3 |
+| 1 | 4 `no-use_cuda_graph` | 37 | 19.4 | 7.9 |
+| 2 | 4 `no-use_cuda_graph` | 37 | 80.4 | 7.9 |
+| 1 | 6 `no-use_cuda_graph` | 48 | oom | oom |
+| 2 | 6 `no-use_cuda_graph` | 48 | oom | oom |
 
 #### Disk Read IOPs
 

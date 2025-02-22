@@ -149,6 +149,14 @@ KTRANSFORMERS_FORCE_BUILD=TRUE uv build
 ## 讨论
 
 #### 基准测试
+**硬件配置**
+
+* AMD Ryzen Threadripper PRO 7965WX 24核处理器
+* 256GB 内存（约225GB/s内存带宽）
+* NVIDIA RTX A6000 48GB显存
+* Linux 内核 6.13.0
+* Ubuntu 24.04.1 LTS (Noble Numbat)
+
 根据R1修订建议，在聊天线程中设置两个顺序性提示（已移除<thinking>标签）。
 
 提示1
@@ -167,13 +175,7 @@ KTRANSFORMERS_FORCE_BUILD=TRUE uv build
 | 1 `llama.cpp@51f311e0` | 18.4 | 8.63 |
 | 2 `llama.cpp@51f311e0` | 12.0 | 7.39 |
 
-**硬件配置**
-
-* AMD Ryzen Threadripper PRO 7965WX 24核处理器
-* 256GB 内存（约225GB/s内存带宽）
-* NVIDIA RTX A6000 48GB显存
-* Linux 内核 6.13.0
-* Ubuntu 24.04.1 LTS (Noble Numbat)
+有趣的是，使用 `--no-use_cuda_graph` 参数的 `ktransformers` 与 llama.cpp 的性能表现接近。更多详情请见下文。
 
 更多基准测试详情请参考：[Level1techs论坛DeepSeek深度讨论帖](https://forum.level1techs.com/t/deepseek-deep-dive-r1-at-home/225826/)
 
@@ -191,6 +193,36 @@ ktransformers 实现了多项领先于 llama.cpp 的优化技术，包括：
 * [闪存注意力PR及讨论](https://github.com/ggml-org/llama.cpp/pull/11557)
 * [MLA实现](https://github.com/ggml-org/llama.cpp/pull/11446)
 * [选择性层卸载](https://github.com/ggml-org/llama.cpp/pull/11397#issuecomment-2645973828)
+
+#### CUDA Graphs
+
+虽然可以使用 `--optimize_config_path` 将额外的专家模块卸载到显存中，但当前必须搭配
+`--no-use_cuda_graph`，这会大幅降低性能。因此，若显存容量超出所需上下文支持的最小需求，并不会带来额外优势。
+
+> 目前，在GPU上执行专家模块会与CUDA Graph冲突。禁用CUDA
+Graph将导致显著性能下降。因此，除非拥有充足显存（例如DeepSeek-V3/R1单层专家模块需至少5.6GB显存），否则不建议启用此功能。我
+们正在积极优化。注：KExpertsTorch未经测试。-[ktransformers
+FAQ](https://github.com/kvcache-ai/ktransformers/blob/main/doc/en/FAQ.md#q-if-i-got-more-vram-than-the-models-requirement-how-can-i-fully-utilize-it)
+
+引擎版本：`ktransformers@94ab2de`
+
+配置规则：
+- 若 `# Offload = 0`，启用 `--use_cuda_graph`
+- 若 `# Offload > 0`，启用 `--no-use_cuda_graph`
+
+| 输入 | 卸载数量 | 显存 | 预处理速率 | 生成速率 |
+| --- | --- | --- | --- | --- |
+| | 专家 | GB | tok/秒| tok/秒 |
+| 1 | 0 `use_cuda_graph` | 14 | 21.0 | 15.1 |
+| 2 | 0 `use_cuda_graph` | 14 | 74.8 | 15.2 |
+| 1 | 0 `no-use_cuda_graph` | 14 | 20.35 | 9.0 |
+| 2 | 0 `no-use_cuda_graph` | 14 | 69.2 | 9.0 |
+| 1 | 2 `no-use_cuda_graph` | 26 | 26.9 | 8.2 |
+| 2 | 2 `no-use_cuda_graph` | 26 | 66.9 | 8.3 |
+| 1 | 4 `no-use_cuda_graph` | 37 | 19.4 | 7.9 |
+| 2 | 4 `no-use_cuda_graph` | 37 | 80.4 | 7.9 |
+| 1 | 6 `no-use_cuda_graph` | 48 | oom | oom |
+| 2 | 6 `no-use_cuda_graph` | 48 | oom | oom |
 
 #### 磁盘I/O性能
 在 RTX 3090Ti 24GB 显存 + 96GB DDR5@88GB/s + Ryzen 9950X + PCIe 5.0 T700 2TB NVMe
