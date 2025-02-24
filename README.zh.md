@@ -251,6 +251,9 @@ amx_bf16 avx512_fp16 amx_tile amx_int8
 
 **请注意：此版本基于存在API端点缺陷的早期代码构建，因此仅适用于本地聊天演示。**
 
+存在一个[已知问题及临时解决方案](https://github.com/kvcache-ai/ktransformers/issues/320#issuecomment-2662274450)：
+需启用环境变量 `ARCH_REQ_XCOMP_PERM`，否则即使已配置AMX扩展指令集，仍会触发报错。
+
 #### 编译错误日志
 在全新Arch Linux系统上编译ktransformers时遇到编译错误，但Ubuntu 22.04环境正常。尝试先后使用Python
 3.11和3.12环境（包括升级至最新cu128 nightly版torch）均未解决。相关错误日志与[ktransformers GitHub Issues
@@ -305,4 +308,5 @@ open-webui serve \
 * [kvcache-ai/KTransformers](https://github.com/kvcache-ai/KTransformers)
 * [ggml-org/llama.cpp](https://github.com/ggml-org/llama.cpp)
 * [本指南历史版本(含更多技术笔记，结构稍乱)](https://github.com/ubergarm/r1-ktransformers-guide/blob/v0.1/README.md)
+* [v0.3版临时解决方案Docker指南](https://github.com/txg155749/ktransformers-v0.3-docker.git)
 * [Level1techs论坛DeepSeek深度讨论帖](https://forum.level1techs.com/t/deepseek-deep-dive-r1-at-home/225826/)

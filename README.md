@@ -253,6 +253,8 @@ If so, you might want to try [ktransformers custom compiled binary release](http
 
 Keep in mind this version was built from earlier code which has API endpoint bugs so can only be used with local chat demo.
 
+There is also a [bug and work-around](https://github.com/kvcache-ai/ktransformers/issues/320#issuecomment-2662274450) that requires `ARCH_REQ_XCOMP_PERM` enabled otherwise you will get an error even with AMX extensions.
+
 #### Build Error Logs
 I'm getting build errors on my new ARCH Linux box when trying to build ktransformers. Seems to work okay on my Ubuntu 22.04 box though.
 I tried it on Python 3.11 first, and then on 3.12 just to see including updating torch to latest cu128 nightly. No dice.
@@ -305,4 +307,5 @@ open-webui serve \
 * [kvcache-ai/KTransformers](https://github.com/kvcache-ai/KTransformers)
 * [ggml-org/llama.cpp](https://github.com/ggml-org/llama.cpp)
 * [previous version of this guide with more notes but kinda messy](https://github.com/ubergarm/r1-ktransformers-guide/blob/v0.1/README.md)
+* [v0.3 work-around docker guide](https://github.com/txg1550759/ktransformers-v0.3-docker.git)
 * [level1techs forum DeepSeek Deep Dive thread](https://forum.level1techs.com/t/deepseek-deep-dive-r1-at-home/225826/)
