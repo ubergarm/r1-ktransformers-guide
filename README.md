@@ -67,14 +67,13 @@ Tested on `NVIDIA Driver Version 570.86.1x` and `CUDA Version: 12.8`.
 
 git clone https://github.com/kvcache-ai/ktransformers.git
 cd ktransformers
-git checkout 94ab2de
-git rev-parse --short HEAD # 94ab2de
+git checkout 9c71bcb
+git rev-parse --short HEAD # 9c71bcb
 uv venv ./venv --python 3.11 --python-preference=only-managed
 source  venv/bin/activate
 
 # If you would prefer to build it yourself, skip next two and go to build instructions
-# This is newer than old buggy v0.2.1 ktransformers@65d73ea release despite the same python version tag
-uv pip install https://github.com/ubergarm/ktransformers/releases/download/94ab2de/ktransformers-0.2.1.post1+cu120torch26fancy-cp311-cp311-linux_x86_64.whl
+uv pip install https://github.com/ubergarm/ktransformers/releases/download/9c71bcb/ktransformers-0.2.2rc1+cu120torch26fancy-cp311-cp311-linux_x86_64.whl
 uv pip install https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.0.5/flash_attn-2.6.3+cu124torch2.6-cp311-cp311-linux_x86_64.whl
 ```
 
@@ -143,7 +142,11 @@ rm -rf ktransformers/ktransformers_ext/cuda/*.egg-info
 
 # if you want to build a distributable python cheese .whl (e.g. from inside a Dockerfile to use elsewhere)
 KTRANSFORMERS_FORCE_BUILD=TRUE uv build
-# uv pip install ./dist/ktransformers-0.2.1.post1+cu120torch26fancy-cp311-cp311-linux_x86_64.whl
+# uv pip install ./dist/ktransformers-0.2.2rc1+cu120torch26fancy-cp311-cp311-linux_x86_64.whl
+
+# TODO: might be able to change release version tag with
+# $ grep version ktransformers/__init__.py
+# __version__ = "0.2.2rc1"
 ```
 
 ## Discussions
@@ -255,6 +258,12 @@ Keep in mind this version was built from earlier code which has API endpoint bug
 
 There is also a [bug and work-around](https://github.com/kvcache-ai/ktransformers/issues/320#issuecomment-2662274450) that requires `ARCH_REQ_XCOMP_PERM` enabled otherwise you will get an error even with AMX extensions.
 
+You might also [need the full bf16 model to do online quantization into fp8/fp4 for Intel AMX](https://github.com/kvcache-ai/ktransformers/issues/617#issuecomment-2676999515).
+
+#### Long Context
+
+Check out this [matrix absorbtion MLA](https://github.com/kvcache-ai/ktransformers/commit/03f8bc9f79d9b3915bce73ab13174f91e53a79d9) configuration for >=20K context to reduce kv cache size.
+
 #### Build Error Logs
 I'm getting build errors on my new ARCH Linux box when trying to build ktransformers. Seems to work okay on my Ubuntu 22.04 box though.
 I tried it on Python 3.11 first, and then on 3.12 just to see including updating torch to latest cu128 nightly. No dice.
@@ -285,6 +294,7 @@ source venv/bin/activate
 # https://docs.openwebui.com/getting-started/env-configuration/#port
 # when open-webui gets borked just do `rm -rf ./data` and restart everything after clearing browser cache
 
+# https://docs.openwebui.com/getting-started/env-configuration/
 export DATA_DIR="$(pwd)/data"
 export ENABLE_OLLAMA_API=False
 export ENABLE_OPENAI_API=True
@@ -295,6 +305,17 @@ export WEBUI_AUTH=False
 export DEFAULT_USER_ROLE="admin"
 export HOST=127.0.0.1
 export PORT=3000 # <--- this is for the open-webui server webpage
+
+# If you only have R1 model loaded, you can save time by disabling these features:
+#   * tag generation
+#   * auto-completion
+#   * title generation
+# https://github.com/kvcache-ai/ktransformers/issues/618#issuecomment-2681381587
+export ENABLE_TAGS_GENERATION=False
+export ENABLE_AUTOCOMPLETE_GENERATION=False
+# Maybe you must manually disable this in the UI for now???
+export TITLE_GENERATION_PROMPT_TEMPLATE=""
+
 
 open-webui serve \
   --host $HOST \

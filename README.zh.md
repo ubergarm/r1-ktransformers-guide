@@ -63,17 +63,20 @@ HF_HUB_ENABLE_HF_TRANSFER=1 \
 
 git clone https://github.com/kvcache-ai/ktransformers.git
 cd ktransformers
-git checkout 94ab2de
-git rev-parse --short HEAD # 应显示 94ab2de
+git checkout 9c71bcb
+git rev-parse --short HEAD # 应显示 9c71bcb
 
 # 创建虚拟环境(仅托管式Python)
 uv venv ./venv --python 3.11 --python-preference=only-managed
 source  venv/bin/activate
 
 # 如果你希望自行构建，请跳过后续两步并转到构建说明
-# 尽管Python版本标签相同，但这是比旧版有问题的v0.2.1 ktransformers@版本更新的版本
-uv pip install https://github.com/ubergarm/ktransformers/releases/download/94ab2de/ktransformers-0.2.1.post1+cu120torch26fancy-cp311-cp311-linux_x86_64.whl
+uv pip install https://github.com/ubergarm/ktransformers/releases/download/9c71bcb/ktransformers-0.2.2rc1+cu120torch26fancy-cp311-cp311-linux_x86_64.whl
 uv pip install https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.0.5/flash_attn-2.6.3+cu124torch2.6-cp311-cp311-linux_x86_64.whl
+
+# 待处理项：或可通过调整版本标签实现发布版本号变更:
+# $ grep version ktransformers/__init__.py
+# __version__ = "0.2.2rc1"
 ```
 
 #### 3. 运行ktransformers
@@ -143,7 +146,7 @@ rm -rf ktransformers/ktransformers_ext/cuda/*.egg-info
 
 # 如需构建可分发的Python wheel包(例如在Docker容器内构建以便其他环境使用)
 KTRANSFORMERS_FORCE_BUILD=TRUE uv build
-# uv pip install ./dist/ktransformers-0.2.1.post1+cu120torch26fancy-cp311-cp311-linux_x86_64.whl
+# uv pip install ./dist/ktransformers-0.2.2rc1+cu120torch26fancy-cp311-cp311-linux_x86_64.whl
 ```
 
 ## 讨论
@@ -254,6 +257,12 @@ amx_bf16 avx512_fp16 amx_tile amx_int8
 存在一个[已知问题及临时解决方案](https://github.com/kvcache-ai/ktransformers/issues/320#issuecomment-2662274450)：
 需启用环境变量 `ARCH_REQ_XCOMP_PERM`，否则即使已配置AMX扩展指令集，仍会触发报错。
 
+你可能还需要[使用完整的bf16模型进行在线量化到fp8/fp4，以适配Intel AMX](https://github.com/kvcache-ai/ktransformers/issues/617#issuecomment-2676999515)。（该链接指向GitHub上关于此技术实现的详细讨论）
+
+#### 长上下文配置
+
+为支持≥20K的上下文长度，推荐使用 [矩阵吸收MLA配置](https://github.com/kvcache-ai/ktransformers/commit/03f8bc9f79d9b3915bce73ab13174f91e53a79d9)，可显著缩减 键值缓存（KV Cache）的显存占用。
+
 #### 编译错误日志
 在全新Arch Linux系统上编译ktransformers时遇到编译错误，但Ubuntu 22.04环境正常。尝试先后使用Python
 3.11和3.12环境（包括升级至最新cu128 nightly版torch）均未解决。相关错误日志与[ktransformers GitHub Issues
@@ -286,6 +295,7 @@ source venv/bin/activate
 # https://docs.openwebui.com/getting-started/env-configuration/#port
 # 若open-webui运行异常，可执行`rm -rf ./data`清除数据后重启服务并清理浏览器缓存
 
+# https://docs.openwebui.com/getting-started/env-configuration/
 export DATA_DIR="$(pwd)/data"
 export ENABLE_OLLAMA_API=False
 export ENABLE_OPENAI_API=True
@@ -296,6 +306,17 @@ export WEBUI_AUTH=False
 export DEFAULT_USER_ROLE="admin"
 export HOST=127.0.0.1
 export PORT=3000 # <--- open-webui网页服务端口
+
+# 如果仅加载了R1模型，可通过禁用以下功能节省时间：
+#   * 标签生成
+#   * 自动补全
+#   * 标题生成
+# https://github.com/kvcache-ai/ktransformers/issues/618#issuecomment-2681381587
+export ENABLE_TAGS_GENERATION=False
+export ENABLE_AUTOCOMPLETE_GENERATION=False
+# 或许目前需手动在界面禁用该功能？？？
+export TITLE_GENERATION_PROMPT_TEMPLATE=""
+
 
 open-webui serve \
   --host $HOST \
