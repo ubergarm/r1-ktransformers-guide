@@ -67,6 +67,8 @@ Tested on `NVIDIA Driver Version 570.86.1x` and `CUDA Version: 12.8`.
 
 git clone https://github.com/kvcache-ai/ktransformers.git
 cd ktransformers
+git submodule init # submodule "third_party/llama.cpp", [submodule "third_party/pybind11"]
+git submodule update
 git checkout 9c71bcb
 git rev-parse --short HEAD # 9c71bcb
 uv venv ./venv --python 3.11 --python-preference=only-managed

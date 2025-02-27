@@ -63,6 +63,8 @@ HF_HUB_ENABLE_HF_TRANSFER=1 \
 
 git clone https://github.com/kvcache-ai/ktransformers.git
 cd ktransformers
+git submodule init # submodule "third_party/llama.cpp", [submodule "third_party/pybind11"]
+git submodule update
 git checkout 9c71bcb
 git rev-parse --short HEAD # 应显示 9c71bcb
 
