@@ -36,8 +36,8 @@ RAID0阵列并无优势，瓶颈在于Linux内核页缓存缓冲I/O机制，而�
 | --- | --- | --- | --- |
 | (GiB) | | |
 | 212 | 2.51 | `unsloth/DeepSeek-R1-GGUF` | [`UD-Q2_K_XL`](https://huggingface.co/unsloth/DeepSeek-R1-GGUF/tree/main/DeepSeek-R1-UD-Q2_K_XL) |
-| 298 | 3.00 | `unsloth/r1-1776-GGUF` | [`UD-Q3_K_XL`](https://huggingface.co/unsloth/r1-1776-GGUF/tree/main/UD-Q3_K_XL) |
-| 377 | 4.00 | `unsloth/r1-1776-GGUF` | [`UD-Q4_K_XL`](https://huggingface.co/unsloth/r1-1776-GGUF/tree/main/UD-Q4_K_XL) |
+| 298 | 3.00 | `unsloth/DeepSeek-R1-GGUF` | [`Q3_K_M`](https://huggingface.co/unsloth/DeepSeek-R1-GGUF/tree/main/DeepSeek-R1-Q3_K_M) |
+| 377 | 4.00 | `unsloth/DeepSeek-R1-GGUF` | [`Q4_K_M`](https://huggingface.co/unsloth/DeepSeek-R1-GGUF/tree/main/DeepSeek-R1-Q4_K_M) |
 | 665 | 8.00 | `unsloth/DeepSeek-R1-GGUF` | [`Q8_0`](https://huggingface.co/unsloth/DeepSeek-R1-GGUF/tree/main/DeepSeek-R1-Q8_0) |
 
 您可直接通过点击各GGUF文件并保存至高速硬盘的目录，或通过如下命令行工具操作：
