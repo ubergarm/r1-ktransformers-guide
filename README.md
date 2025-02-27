@@ -69,13 +69,25 @@ git clone https://github.com/kvcache-ai/ktransformers.git
 cd ktransformers
 git submodule init # submodule "third_party/llama.cpp", [submodule "third_party/pybind11"]
 git submodule update
-git checkout 9c71bcb
-git rev-parse --short HEAD # 9c71bcb
+git checkout 7a19f3b
+git rev-parse --short HEAD # 7a19f3b
 uv venv ./venv --python 3.11 --python-preference=only-managed
 source  venv/bin/activate
 
+# Optional Experimental flashinfer instead of triton
+# I do *not* recommend this yet unless you are already successful advanced user
+# $ uv pip install flashinfer-python
+# Find your GPU ARCH here:
+# https://stackoverflow.com/questions/68496906/pytorch-installation-for-different-cuda-architectures
+# https://developer.nvidia.com/cuda-gpus
+# This example is for RTX 3090TI and RTX A6000
+# $ export TORCH_CUDA_ARCH_LIST="8.0 8.6 8.7"
+# The first inference after startup will be slow as it must JIT compile
+# 2025-02-27 12:24:22,992 - INFO - flashinfer.jit: Loading JIT ops: batch_mla_attention_dtype_q_bf16_dtype_kv_bf16_dtype_o_bf16_dtype_idx_i32_head_dim_ckv_512_head_dim_kpe_64
+# 2025-02-27 12:24:42,108 - INFO - flashinfer.jit: Finished loading JIT ops: batch_mla_attention_dtype_q_bf16_dtype_kv_bf16_dtype_o_bf16_dtype_idx_i32_head_dim_ckv_512_head_dim_kpe_64
+
 # If you would prefer to build it yourself, skip next two and go to build instructions
-uv pip install https://github.com/ubergarm/ktransformers/releases/download/9c71bcb/ktransformers-0.2.2rc1+cu120torch26fancy-cp311-cp311-linux_x86_64.whl
+uv pip install https://github.com/ubergarm/ktransformers/releases/download/7a19f3b/ktransformers-0.2.2rc1+cu120torch26fancy.amd.ubergarm.7a19f3b.flashinfer-cp311-cp311-linux_x86_64.whl
 uv pip install https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.0.5/flash_attn-2.6.3+cu124torch2.6-cp311-cp311-linux_x86_64.whl
 ```
 
@@ -124,6 +136,9 @@ cd ../..
 
 # Install flash_attn
 uv pip install flash_attn --no-build-isolation
+
+# Optional Experimental flashinfer instead of triton
+uv pip install flashinfer-python
 
 # ONLY IF you have Intel dual socket and >1TB RAM to hold 2x copies of entire model in RAM (one copy per socket)
 # Dual socket AMD EPYC NPS0 probably makes this not needed?
@@ -327,6 +342,8 @@ open-webui serve \
 ```
 
 ## References
+* [Dual Intel Xeon NUMA Nodes Discussion](https://github.com/ggml-org/llama.cpp/discussions/12088)
+* [Dual AMD Epyc NUMA Nodes Discussion](https://github.com/ggml-org/llama.cpp/discussions/11733)
 * [kvcache-ai/KTransformers](https://github.com/kvcache-ai/KTransformers)
 * [ggml-org/llama.cpp](https://github.com/ggml-org/llama.cpp)
 * [previous version of this guide with more notes but kinda messy](https://github.com/ubergarm/r1-ktransformers-guide/blob/v0.1/README.md)

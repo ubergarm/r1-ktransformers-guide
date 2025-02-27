@@ -65,15 +65,29 @@ git clone https://github.com/kvcache-ai/ktransformers.git
 cd ktransformers
 git submodule init # submodule "third_party/llama.cpp", [submodule "third_party/pybind11"]
 git submodule update
-git checkout 9c71bcb
-git rev-parse --short HEAD # 应显示 9c71bcb
+git checkout 7a19f3b
+git rev-parse --short HEAD # 应显示 7a19f3b
 
 # 创建虚拟环境(仅托管式Python)
 uv venv ./venv --python 3.11 --python-preference=only-managed
 source  venv/bin/activate
 
+# 可选实验性使用flashinfer替代triton
+# 除非您是已经成功上手的进阶用户，否则暂不建议使用
+# 使用以下命令安装：
+# $ uv pip install flashinfer-python
+# 通过以下链接查询GPU计算架构：
+# https://stackoverflow.com/questions/68496906/pytorch-installation-for-different-cuda-architectures
+# https://developer.nvidia.com/cuda-gpus
+# 本示例适用于RTX 3090TI和RTX 6000A
+# 设置TORCH_CUDA_ARCH_LIST环境变量：
+# $ export TORCH_CUDA_ARCH_LIST="8.0 8.6 8.7"
+# 注意：首次推理会较慢，需要等待JIT编译完成
+# 2025-02-27 12:24:22,992 - INFO - flashinfer.jit: Loading JIT ops: batch_mla_attention_dtype_q_bf16_dtype_kv_bf16_dtype_o_bf16_dtype_idx_i32_head_dim_ckv_512_head_dim_kpe_64
+# 2025-02-27 12:24:42,108 - INFO - flashinfer.jit: Finished loading JIT ops: batch_mla_attention_dtype_q_bf16_dtype_kv_bf16_dtype_o_bf16_dtype_idx_i32_head_dim_ckv_512_head_dim_kpe_64
+
 # 如果你希望自行构建，请跳过后续两步并转到构建说明
-uv pip install https://github.com/ubergarm/ktransformers/releases/download/9c71bcb/ktransformers-0.2.2rc1+cu120torch26fancy-cp311-cp311-linux_x86_64.whl
+uv pip install https://github.com/ubergarm/ktransformers/releases/download/7a19f3b/ktransformers-0.2.2rc1+cu120torch26fancy.amd.ubergarm.7a19f3b.flashinfer-cp311-cp311-linux_x86_64.whl
 uv pip install https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.0.5/flash_attn-2.6.3+cu124torch2.6-cp311-cp311-linux_x86_64.whl
 
 # 待处理项：或可通过调整版本标签实现发布版本号变更:
@@ -127,6 +141,11 @@ cd ../..
 
 # 安装flash_attn
 uv pip install flash_attn --no-build-isolation
+
+# 可选实验性使用flashinfer替代triton
+# 除非您是已经成功上手的进阶用户，否则暂不建议使用
+# 使用以下命令安装：
+# $ uv pip install flashinfer-python
 
 # 仅适用于以下情况：
 # 配备Intel双路CPU且内存>1TB可容纳两份完整模型内存副本(每路CPU一份副本)
@@ -328,8 +347,10 @@ open-webui serve \
 ```
 
 ## 参考文献
+* [双路 Intel Xeon NUMA 节点讨论](https://github.com/ggml-org/llama.cpp/discussions/12088)
+* [双路 AMD Epyc NUMA 节点讨论](https://github.com/ggml-org/llama.cpp/discussions/11733)
 * [kvcache-ai/KTransformers](https://github.com/kvcache-ai/KTransformers)
 * [ggml-org/llama.cpp](https://github.com/ggml-org/llama.cpp)
 * [本指南历史版本(含更多技术笔记，结构稍乱)](https://github.com/ubergarm/r1-ktransformers-guide/blob/v0.1/README.md)
-* [v0.3版临时解决方案Docker指南](https://github.com/txg155749/ktransformers-v0.3-docker.git)
+* [v0.3版临时解决方案Docker指南](https://github.com/txg1550759/ktransformers-v0.3-docker.git)
 * [Level1techs论坛DeepSeek深度讨论帖](https://forum.level1techs.com/t/deepseek-deep-dive-r1-at-home/225826/)
