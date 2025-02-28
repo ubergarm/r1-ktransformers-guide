@@ -138,7 +138,8 @@ cd ../..
 uv pip install flash_attn --no-build-isolation
 
 # Optional Experimental flashinfer instead of triton
-uv pip install flashinfer-python
+# I do *not* recommend this yet unless you are already successful advanced user
+# $ uv pip install flashinfer-python
 
 # ONLY IF you have Intel dual socket and >1TB RAM to hold 2x copies of entire model in RAM (one copy per socket)
 # Dual socket AMD EPYC NPS0 probably makes this not needed?
