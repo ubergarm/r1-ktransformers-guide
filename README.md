@@ -77,11 +77,9 @@ source  venv/bin/activate
 # Optional Experimental flashinfer instead of triton
 # I do *not* recommend this yet unless you are already successful advanced user
 # $ uv pip install flashinfer-python
-# Find your GPU ARCH here:
-# https://stackoverflow.com/questions/68496906/pytorch-installation-for-different-cuda-architectures
-# https://developer.nvidia.com/cuda-gpus
+# Find your GPU ARCH here: `nvidia-smi --query-gpu=compute_cap --format=csv`
 # This example is for RTX 3090TI and RTX A6000
-# $ export TORCH_CUDA_ARCH_LIST="8.0 8.6 8.7"
+# $ export TORCH_CUDA_ARCH_LIST="8.6"
 # The first inference after startup will be slow as it must JIT compile
 # 2025-02-27 12:24:22,992 - INFO - flashinfer.jit: Loading JIT ops: batch_mla_attention_dtype_q_bf16_dtype_kv_bf16_dtype_o_bf16_dtype_idx_i32_head_dim_ckv_512_head_dim_kpe_64
 # 2025-02-27 12:24:42,108 - INFO - flashinfer.jit: Finished loading JIT ops: batch_mla_attention_dtype_q_bf16_dtype_kv_bf16_dtype_o_bf16_dtype_idx_i32_head_dim_ckv_512_head_dim_kpe_64

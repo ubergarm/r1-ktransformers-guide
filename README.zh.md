@@ -76,12 +76,10 @@ source  venv/bin/activate
 # 除非您是已经成功上手的进阶用户，否则暂不建议使用
 # 使用以下命令安装：
 # $ uv pip install flashinfer-python
-# 通过以下链接查询GPU计算架构：
-# https://stackoverflow.com/questions/68496906/pytorch-installation-for-different-cuda-architectures
-# https://developer.nvidia.com/cuda-gpus
+# 通过以下链接查询GPU计算架构： `nvidia-smi --query-gpu=compute_cap --format=csv`
 # 本示例适用于RTX 3090TI和RTX 6000A
 # 设置TORCH_CUDA_ARCH_LIST环境变量：
-# $ export TORCH_CUDA_ARCH_LIST="8.0 8.6 8.7"
+# $ export TORCH_CUDA_ARCH_LIST="8.6"
 # 注意：首次推理会较慢，需要等待JIT编译完成
 # 2025-02-27 12:24:22,992 - INFO - flashinfer.jit: Loading JIT ops: batch_mla_attention_dtype_q_bf16_dtype_kv_bf16_dtype_o_bf16_dtype_idx_i32_head_dim_ckv_512_head_dim_kpe_64
 # 2025-02-27 12:24:42,108 - INFO - flashinfer.jit: Finished loading JIT ops: batch_mla_attention_dtype_q_bf16_dtype_kv_bf16_dtype_o_bf16_dtype_idx_i32_head_dim_ckv_512_head_dim_kpe_64
